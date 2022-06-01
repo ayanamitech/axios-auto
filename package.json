@@ -1,6 +1,6 @@
 {
   "name": "axios-auto",
-  "version": "0.27.2",
+  "version": "0.27.3",
   "description": "Simple Axios function with basic retry & tor support",
   "main": "./dist/cjs/index.js",
   "module": "./dist/mjs/index.js",
@@ -30,6 +30,9 @@
     "get",
     "post",
     "fetch"
+  ],
+  "files": [
+    "dist"
   ],
   "author": "AyanamiTech <ayanami0330@protonmail.com>",
   "license": "MIT",
