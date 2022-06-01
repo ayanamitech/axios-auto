@@ -109,7 +109,7 @@ describe('axios-auto', () => {
   it('POST request test', async () => {
     const axiosInstance = axios;
     // { onNoMatch: "throwException" } to return new Error object from mock, not the 404 error
-    const mock = new MockAdapter(axiosInstance, { onNoMatch: "throwException" });
+    const mock = new MockAdapter(axiosInstance, { onNoMatch: 'throwException' });
     const msg = { msg: 'Testing POST request', date: new Date().toString() };
     mock.onPost('/post', { id: 1 }).reply(200, msg);
     const result = await post('/post', { id: 1 }, { axios: axiosInstance, timeout: 0, retryMax: 1, retrySec: 3 });

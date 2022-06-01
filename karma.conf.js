@@ -1,4 +1,5 @@
 const webpack = require('webpack');
+const esbuild = require('esbuild');
 const path = require('path');
 const os = require('os');
 
@@ -16,6 +17,18 @@ module.exports = function(config) {
     },
     webpack: {
       mode: 'development',
+      module: {
+        rules: [
+          {
+            test: /\.js?$/,
+            loader: 'esbuild-loader',
+            options: {
+              target: 'es2015',
+              implementation: esbuild
+            }
+          }
+        ]
+      },
       output: {
         path: path.join(os.tmpdir(), '_karma_webpack_') + Math.floor(Math.random() * 1000000)
       },

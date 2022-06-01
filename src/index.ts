@@ -82,10 +82,10 @@ export async function fetch(config: fetchConfig): Promise<any> {
     method: config.method ?? 'GET',
     timeout: config.timeout ?? config.socks_enabled ? 30000: 10000,
   };
-  if (!!config.responseType) {
+  if (config.responseType) {
     axiosOptions.responseType = config.responseType;
   }
-  if (!!config.data) {
+  if (config.data) {
     axiosOptions.data = config.data;
   }
   /**
