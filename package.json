@@ -1,6 +1,6 @@
 {
   "name": "axios-auto",
-  "version": "0.28.0",
+  "version": "0.28.1",
   "description": "Simple Axios function with basic retry & tor support",
   "main": "./dist/cjs/index.js",
   "module": "./dist/mjs/index.js",
@@ -11,6 +11,7 @@
     "test": "npm run test:node && npm run test:browser",
     "test:node": "mocha test/index.js --timeout 500000",
     "test:browser": "karma start --single-run",
+    "test:git": "node script/gitdiff.js",
     "build": "npm run clean && npm run build:type && npm run build:node && npm run build:browser && npm run build:copy",
     "clean": "rimraf dist test",
     "build:type": "tsc -p tsconfig.json --outDir types --declaration --emitDeclarationOnly",
@@ -63,6 +64,7 @@
     "rimraf": "^3.0.2",
     "rollup": "^2.75.3",
     "rollup-plugin-esbuild": "^4.9.1",
+    "simple-git": "^3.7.1",
     "ts-node": "^10.8.0",
     "typescript": "^4.7.2",
     "webpack": "^5.72.1",

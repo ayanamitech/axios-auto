@@ -31,6 +31,13 @@ export interface getConfig {
   // Optional callback function to retrive connection status
   callback?: callback;
 
+  // Use user provided http.Agent compatible agent
+  httpAgent?: any;
+  httpsAgent?: any;
+
+  // Force credentials
+  withCredentials?: boolean;
+
   // SocksProxy related
   onion_url?: string;
   socks_enabled?: boolean;
@@ -97,7 +104,7 @@ function createSocksOptions(config: fetchConfig, url: string, retry: number): so
   // Handle proxy agent for onion addresses
   if (getProtocol(url) === 'http') {
     axiosOptions.httpAgent = new SocksProxyAgent(socksOptions);
-  } else {
+  } else if (getProtocol(url) === 'https') {
     axiosOptions.httpsAgent = new SocksProxyAgent(socksOptions);
   }
 
@@ -144,13 +151,19 @@ export async function fetch(config: fetchConfig): Promise<any> {
       /**
         Browsers don't need tor socket support (Node.js only feature)
       **/
-      if (isBrowser === false && config.socks_enabled === true && config.socks_proxy_agent) {
-        const socksOptions = createSocksOptions(config, axiosOptions.url, retry);
-        // Handle proxy agent for onion addresses
-        if (getProtocol(axiosOptions.url) === 'http') {
-          axiosOptions.httpAgent = socksOptions.httpAgent;
-        } else {
-          axiosOptions.httpsAgent = socksOptions.httpsAgent;
+      if (isBrowser === false) {
+        if (config.socks_enabled === true && config.socks_proxy_agent) {
+          const socksOptions = createSocksOptions(config, axiosOptions.url, retry);
+          // Handle proxy agent for onion addresses
+          if (getProtocol(axiosOptions.url) === 'http') {
+            axiosOptions.httpAgent = socksOptions.httpAgent;
+          } else if (getProtocol(axiosOptions.url) === 'https') {
+            axiosOptions.httpsAgent = socksOptions.httpsAgent;
+          }
+        } else if (config.httpAgent && getProtocol(axiosOptions.url) === 'http') {
+          axiosOptions.httpAgent = config.httpAgent;
+        } else if (config.httpsAgent && getProtocol(axiosOptions.url) === 'https') {
+          axiosOptions.httpsAgent = config.httpsAgent;
         }
       }
 
@@ -179,7 +192,10 @@ export async function fetch(config: fetchConfig): Promise<any> {
           config.callback(e.response);
         }
       }
-      await setDelay(retrySec);
+      // Disable failure delay when retry is disabled with option retryMax: 1
+      if (retryMax !== 1) {
+        await setDelay(retrySec);
+      }
       if (retry === retryMax - 1) {
         throw e;
       }

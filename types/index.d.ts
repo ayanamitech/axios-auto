@@ -12,6 +12,9 @@ export interface getConfig {
     retrySec?: number;
     axios?: AxiosStatic;
     callback?: callback;
+    httpAgent?: any;
+    httpsAgent?: any;
+    withCredentials?: boolean;
     onion_url?: string;
     socks_enabled?: boolean;
     socks_isTor?: boolean;

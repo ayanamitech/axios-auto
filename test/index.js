@@ -46,7 +46,7 @@ function createSocksOptions(config, url, retry) {
   }
   if (getProtocol(url) === "http") {
     axiosOptions.httpAgent = new SocksProxyAgent(socksOptions);
-  } else {
+  } else if (getProtocol(url) === "https") {
     axiosOptions.httpsAgent = new SocksProxyAgent(socksOptions);
   }
   return axiosOptions;
@@ -77,12 +77,18 @@ async function fetch(config) {
   let retry = 0;
   while (retry < retryMax) {
     try {
-      if (isBrowser === false && config.socks_enabled === true && config.socks_proxy_agent) {
-        const socksOptions = createSocksOptions(config, axiosOptions.url, retry);
-        if (getProtocol(axiosOptions.url) === "http") {
-          axiosOptions.httpAgent = socksOptions.httpAgent;
-        } else {
-          axiosOptions.httpsAgent = socksOptions.httpsAgent;
+      if (isBrowser === false) {
+        if (config.socks_enabled === true && config.socks_proxy_agent) {
+          const socksOptions = createSocksOptions(config, axiosOptions.url, retry);
+          if (getProtocol(axiosOptions.url) === "http") {
+            axiosOptions.httpAgent = socksOptions.httpAgent;
+          } else if (getProtocol(axiosOptions.url) === "https") {
+            axiosOptions.httpsAgent = socksOptions.httpsAgent;
+          }
+        } else if (config.httpAgent && getProtocol(axiosOptions.url) === "http") {
+          axiosOptions.httpAgent = config.httpAgent;
+        } else if (config.httpsAgent && getProtocol(axiosOptions.url) === "https") {
+          axiosOptions.httpsAgent = config.httpsAgent;
         }
       }
       const response = await axiosInstance(axiosOptions);
@@ -106,7 +112,9 @@ async function fetch(config) {
           config.callback(e.response);
         }
       }
-      await setDelay(retrySec);
+      if (retryMax !== 1) {
+        await setDelay(retrySec);
+      }
       if (retry === retryMax - 1) {
         throw e;
       }
