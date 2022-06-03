@@ -6,13 +6,16 @@ const license = fs.readFileSync("LICENSE", {encoding: "utf-8"});
 // eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
 import pkg from './package.json';
 const deps = pkg.dependencies || {};
+const peerDeps = pkg.peerDependencies || {};
+const testDeps = [ 'assert', 'axios-mock-adapter' ];
 
 const banner = [
   "/*!",
   ...license.split("\n").map(o => ` * ${o}`),
   " */",
 ].join("\n");
-const external = Object.keys(deps).concat(["events"]);
+const external = Object.keys(deps).concat(Object.keys(peerDeps)).concat(["events"]);
+const externalTest = external.concat(testDeps);
 
 fs.mkdirSync('dist');
 fs.mkdirSync('dist/cjs');
@@ -63,7 +66,7 @@ const test = {
       tsconfig: 'tsconfig.json'
     }),
   ],
-  external,
+  external: externalTest,
   output: [
     {
       file: 'test/index.js',

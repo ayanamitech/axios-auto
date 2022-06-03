@@ -1,6 +1,4 @@
 import axios, { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders } from 'axios';
-import { SocksProxyAgent } from 'socks-proxy-agent';
-import { serializeError } from 'serialize-error-browser';
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -21,6 +19,9 @@ export interface getConfig {
   timeout?: number;
   responseType?: ResponseType;
 
+  // Debug settings
+  debug?: boolean;
+
   // Retry settings
   retryMax?: number;
   retrySec?: number;
@@ -33,6 +34,8 @@ export interface getConfig {
   // SocksProxy related
   onion_url?: string;
   socks_enabled?: boolean;
+  socks_isTor?: boolean;
+  socks_proxy_agent?: any;
   socks_onion?: boolean;
   socks_host?: string;
   socks_port?: number;
@@ -45,18 +48,19 @@ export interface fetchConfig extends getConfig {
   data?: any;
 }
 
-export interface axiosOptions {
+interface axiosOptions {
   url: string;
   method: Method | string;
   headers?: AxiosRequestHeaders;
   data?: any;
   timeout: number;
   responseType?: ResponseType;
+  validateStatus: (status: number) => boolean;
   httpAgent?: any;
   httpsAgent?: any;
 }
 
-export interface socksOptions {
+interface socksOptions {
   agentOptions: {
     keepAlive: boolean;
   };
@@ -66,10 +70,44 @@ export interface socksOptions {
   password?: string;
 }
 
+interface socksAgentOptions {
+  httpAgent?: any;
+  httpsAgent?: any;
+}
+
+function createSocksOptions(config: fetchConfig, url: string, retry: number): socksAgentOptions {
+  const SocksProxyAgent = config.socks_proxy_agent;
+  const socksOptions: socksOptions = {
+    agentOptions: {
+      keepAlive: true
+    },
+    hostname: config.socks_host,
+    port: config.socks_port
+  };
+  const axiosOptions: socksAgentOptions = {};
+
+  if (!!config.socks_username && !!config.socks_password) {
+    socksOptions.username = config.socks_username;
+    socksOptions.password = config.socks_password;
+  } else if (config.socks_isTor === true) {
+    // Retry with different tor circuits https://stackoverflow.com/a/64960234
+    socksOptions.username = `circuit${retry}`;
+  }
+
+  // Handle proxy agent for onion addresses
+  if (getProtocol(url) === 'http') {
+    axiosOptions.httpAgent = new SocksProxyAgent(socksOptions);
+  } else {
+    axiosOptions.httpsAgent = new SocksProxyAgent(socksOptions);
+  }
+
+  return axiosOptions;
+}
+
 /**
   Axios Request Wrapper function that supports automatic retries based on configuration
 
-  (Also supports Tor Connection for )
+  (Also supports Tor Connection for privacy)
   https://github.com/axios/axios/blob/a02fe284dfa9161a548b5c079c43ee0f9dfba053/index.d.ts#L191
 **/
 export async function fetch(config: fetchConfig): Promise<any> {
@@ -81,6 +119,7 @@ export async function fetch(config: fetchConfig): Promise<any> {
     url: (config.socks_enabled === true && config.socks_onion === true && !!config.onion_url) ? (config.onion_url || config.url) : config.url,
     method: config.method ?? 'GET',
     timeout: config.timeout ?? config.socks_enabled ? 30000: 10000,
+    validateStatus: (status) => status >= 200 && status < 300,
   };
   if (config.responseType) {
     axiosOptions.responseType = config.responseType;
@@ -99,35 +138,19 @@ export async function fetch(config: fetchConfig): Promise<any> {
   const retryMax = config.retryMax ?? 5;
   const retrySec = config.retrySec ?? 60;
   let retry = 0;
-  let error: object = {};
 
   while (retry < retryMax) {
     try {
       /**
         Browsers don't need tor socket support (Node.js only feature)
       **/
-      if (isBrowser === false && config.socks_enabled === true) {
-        const socksOptions: socksOptions = {
-          agentOptions: {
-            keepAlive: true
-          },
-          hostname: config.socks_host,
-          port: config.socks_port
-        };
-
-        if (!!config.socks_username && !!config.socks_password) {
-          socksOptions.username = config.socks_username;
-          socksOptions.password = config.socks_password;
-        } else {
-          // Retry with different tor circuits https://stackoverflow.com/a/64960234
-          socksOptions.username = `circuit${retry}`;
-        }
-
+      if (isBrowser === false && config.socks_enabled === true && config.socks_proxy_agent) {
+        const socksOptions = createSocksOptions(config, axiosOptions.url, retry);
         // Handle proxy agent for onion addresses
         if (getProtocol(axiosOptions.url) === 'http') {
-          axiosOptions.httpAgent = new SocksProxyAgent(socksOptions);
+          axiosOptions.httpAgent = socksOptions.httpAgent;
         } else {
-          axiosOptions.httpsAgent = new SocksProxyAgent(socksOptions);
+          axiosOptions.httpsAgent = socksOptions.httpsAgent;
         }
       }
 
@@ -137,24 +160,32 @@ export async function fetch(config: fetchConfig): Promise<any> {
         config.callback(response);
       }
 
-      if (response.statusText === 'error' || response.status < 200 || response.status > 299) {
-        throw new Error(`HTTP Error ${response.status} while fetching from ${axiosOptions.url}`);
+      if (response.statusText === 'error') {
+        throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
+      }
+
+      if (config.debug === true && response.config) {
+        const agent = response.config.headers?.['User-Agent'];
+        console.log(`Sending ${response.config.method?.toUpperCase()} request to ${response.config.url} using Agent ${agent}`);
       }
 
       return response.data;
     } catch (e: any) {
       if (e.response?.config?.url && e.response?.status) {
-        console.error(`Request to ${e.response.config.url} failed with code ${e.response.status}`);
+        if (config.debug === true) {
+          console.error(`Request to ${e.response.config.url} failed with code ${e.response.status}`);
+        }
         if (typeof config.callback === 'function') {
           config.callback(e.response);
         }
       }
-      error = serializeError(e);
       await setDelay(retrySec);
+      if (retry === retryMax - 1) {
+        throw e;
+      }
       retry++;
     }
   }
-  return { error: error };
 }
 
 export function get(url: string, config: getConfig): Promise<any> {

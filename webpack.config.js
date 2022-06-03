@@ -31,14 +31,6 @@ module.exports = {
     new webpack.BannerPlugin(fs.readFileSync('./LICENSE', 'utf8')),
   ],
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
-    fallback: {
-      'stream': false,
-      'buffer': false,
-      'os': false,
-      'dns': false,
-      'tls': false,
-      'net': false
-    },
+    extensions: ['.tsx', '.ts', '.js']
   },
 };

@@ -10,7 +10,6 @@ describe('axios-auto', () => {
     const msg = { msg: 'Testing axios-auto', date: new Date().toString() };
     mock.onGet('/hello').reply(200, msg);
     const result = await fetch({ axios: axiosInstance, url: '/hello', timeout: 0 });
-    assert.equal(result.error, undefined);
     assert.deepEqual(result, msg);
   });
   it('fail once', async () => {
@@ -40,7 +39,6 @@ describe('axios-auto', () => {
       .onGet('/once')
       .reply(200, msg);
     const result = await fetch({ axios: axiosInstance, url: '/once', callback, timeout: 0, retrySec: 3 });
-    assert.equal(result.error, undefined);
     assert.deepEqual(result, msg);
   });
   it('fail thrice', async () => {
@@ -74,7 +72,6 @@ describe('axios-auto', () => {
       .onGet('/thrice')
       .reply(200, msg);
     const result = await fetch({ axios: axiosInstance, url: '/thrice', callback, timeout: 0, retrySec: 3 });
-    assert.equal(result.error, undefined);
     assert.deepEqual(result, msg);
   });
   it('fail report', async () => {
@@ -84,9 +81,10 @@ describe('axios-auto', () => {
     mock
       .onGet('/fail')
       .reply(429, msg);
-    const result = await fetch({ axios: axiosInstance, url: '/fail', timeout: 0, retryMax: 1, retrySec: 3 });
-    assert.equal(result.error.name, 'Error');
-    assert.equal(result.error.message, 'Request failed with status code 429');
+    await assert.rejects(async () => await fetch({ axios: axiosInstance, url: '/fail', timeout: 0, retryMax: 1, retrySec: 3 }), {
+      name: /^Error$/,
+      message: /Request failed with status code 429/
+    });
   });
   it('GET request test', async () => {
     const axiosInstance = axios;
@@ -94,7 +92,6 @@ describe('axios-auto', () => {
     const msg = { msg: 'Testing GET request', date: new Date().toString() };
     mock.onGet('/get').reply(200, msg);
     const result = await get('/get', { axios: axiosInstance, timeout: 0 });
-    assert.equal(result.error, undefined);
     assert.deepEqual(result, msg);
   });
   it('GET request fail test', async () => {
@@ -102,9 +99,10 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing GET fail request', date: new Date().toString() };
     mock.onGet('/get').reply(200, msg);
-    const result = await get('/getFail', { axios: axiosInstance, timeout: 0, retryMax: 1, retrySec: 3  });
-    assert.equal(result.error.name, 'Error');
-    assert.equal(result.error.message, 'Request failed with status code 404');
+    await assert.rejects(async () => await get('/getFail', { axios: axiosInstance, timeout: 0, retryMax: 1, retrySec: 3  }), {
+      name: /^Error$/,
+      message: /Request failed with status code 404/
+    });
   });
   it('POST request test', async () => {
     const axiosInstance = axios;
@@ -121,8 +119,9 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing POST fail request', date: new Date().toString() };
     mock.onPost('/postFail', { id: 1 }).reply(200, msg);
-    const result = await post('/postFail', { id: 2 }, { axios: axiosInstance, timeout: 0, retryMax: 1, retrySec: 3  });
-    assert.equal(result.error.name, 'Error');
-    assert.equal(result.error.message, 'Request failed with status code 404');
+    await assert.rejects(async () => await post('/postFail', { id: 2 }, { axios: axiosInstance, timeout: 0, retryMax: 1, retrySec: 3  }), {
+      name: /^Error$/,
+      message: /Request failed with status code 404/
+    });
   });
 });

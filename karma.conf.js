@@ -39,13 +39,7 @@ module.exports = function(config) {
       ],
       resolve: {
         fallback: {
-          assert: require.resolve('assert/'),
-          stream: false,
-          buffer: false,
-          os: false,
-          dns: false,
-          tls: false,
-          net: false
+          assert: require.resolve('assert/')
         },
       }
     },
