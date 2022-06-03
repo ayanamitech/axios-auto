@@ -1,4 +1,8 @@
+/// <reference types="node" />
+/// <reference types="node" />
 import { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders } from 'axios';
+import type { Agent as HTTPAgent } from 'http';
+import type { Agent as HTTPSAgent } from 'https';
 export interface callback {
     (message: AxiosResponse): void;
 }
@@ -12,8 +16,8 @@ export interface getConfig {
     retrySec?: number;
     axios?: AxiosStatic;
     callback?: callback;
-    httpAgent?: any;
-    httpsAgent?: any;
+    httpAgent?: HTTPAgent;
+    httpsAgent?: HTTPSAgent;
     withCredentials?: boolean;
     onion_url?: string;
     socks_enabled?: boolean;

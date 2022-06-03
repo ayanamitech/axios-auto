@@ -1,4 +1,6 @@
 import axios, { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders } from 'axios';
+import type { Agent as HTTPAgent } from 'http';
+import type { Agent as HTTPSAgent } from 'https';
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -32,8 +34,8 @@ export interface getConfig {
   callback?: callback;
 
   // Use user provided http.Agent compatible agent
-  httpAgent?: any;
-  httpsAgent?: any;
+  httpAgent?: HTTPAgent;
+  httpsAgent?: HTTPSAgent;
 
   // Force credentials
   withCredentials?: boolean;
@@ -63,8 +65,8 @@ interface axiosOptions {
   timeout: number;
   responseType?: ResponseType;
   validateStatus: (status: number) => boolean;
-  httpAgent?: any;
-  httpsAgent?: any;
+  httpAgent?: HTTPAgent;
+  httpsAgent?: HTTPSAgent;
 }
 
 interface socksOptions {
@@ -78,8 +80,8 @@ interface socksOptions {
 }
 
 interface socksAgentOptions {
-  httpAgent?: any;
-  httpsAgent?: any;
+  httpAgent?: HTTPAgent;
+  httpsAgent?: HTTPSAgent;
 }
 
 function createSocksOptions(config: fetchConfig, url: string, retry: number): socksAgentOptions {
