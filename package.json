@@ -14,6 +14,7 @@
     "test:git": "node script/gitdiff.js",
     "build": "npm run clean && npm run build:type && npm run build:node && npm run build:browser && npm run build:copy",
     "clean": "rimraf dist test",
+    "docs": "typedoc",
     "build:type": "tsc -p tsconfig.json --outDir types --declaration --emitDeclarationOnly",
     "build:node": "rollup -c",
     "build:browser": "webpack",
@@ -69,6 +70,7 @@
     "rollup-plugin-esbuild": "^4.9.1",
     "simple-git": "^3.7.1",
     "ts-node": "^10.8.0",
+    "typedoc": "^0.22.17",
     "typescript": "^4.7.2",
     "webpack": "^5.72.1",
     "webpack-cli": "^4.9.2"

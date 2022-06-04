@@ -1,5 +1,5 @@
 import './promise';
-import axios, { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders } from 'axios';
+import axios, { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
 
@@ -9,93 +9,253 @@ const setDelay = (secs: number): Promise<void> => new Promise(resolve => setTime
 
 const getProtocol = (url: string): string => new URL(url).protocol.split(':')[0];
 
+/**
+ * AxiosResponse object with additional error & count params, returned by **config.callback** function for every request to server while promise is not resolved.
+ */
 export interface AxiosResponseExtended extends AxiosResponse {
-  error: boolean
+  /**
+   * **error** is true when axios detected HTTP error, otherwise false
+   */
+  error: boolean,
+  /**
+   * **count** is the number of HTTP request sent to server
+   */
+  count: number
 }
 
+/**
+ * AxiosResponseResult object with customized parameters from AxiosResponse to handle errors.
+ */
+export interface AxiosResponseResult {
+  /**
+   * Raw data returned by server
+   */
+  data?: any;
+  /**
+   * HTTP status code, 200 for most working cases
+   */
+  status?: number;
+  /**
+   * HTTP status text, 'OK' for most working cases
+   */
+  statusText?: string;
+  /**
+   * HTTP response headers returned by server, should support CORS header by server if it is being used with XHR
+   */
+  headers?: AxiosResponseHeaders;
+  /**
+   * AxiosRequestConfig supplied by fetchConfig
+   */
+  config: AxiosRequestConfig;
+  /**
+   * Request sent by Axios
+   */
+  request?: any;
+  /**
+   * Will return null if promise is resolved, will return Error object when the entire promise is rejected
+   */
+  error: null | Error;
+}
+
+/**
+ * **config.callback** function to retrive debug information while promise is ongoing
+ */
 export interface callback {
   (message:AxiosResponseExtended): void;
 }
 
+/**
+ * **config.finishCallback** function to retrive debug information after promise is resolved / rejected
+ */
 export interface finishCallback {
-  (message:any): void;
+  (message:AxiosResponseResult): void;
 }
 
 /**
-  From https://github.com/axios/axios/blob/a02fe284dfa9161a548b5c079c43ee0f9dfba053/index.d.ts#L127
-**/
-export interface getConfig {
+ * Common Axios Wrapper config used by fetch function
+ */
+export interface fetchConfig {
+  /**
+   * **url** is the server URL that will be used for the request
+   */
+  url: string;
+  /**
+   * **method** is the request method to be used when making the request
+   */
   method?: Method | string;
+  /**
+   * **headers** are custom headers to be sent
+   */
   headers?: AxiosRequestHeaders;
+  /**
+   * **data** is the data to be sent as the request body
+   * Only applicable for request methods 'PUT', 'POST', 'DELETE , and 'PATCH'
+   * When no `transformRequest` is set, must be of one of the following types:
+   * - string, plain object, ArrayBuffer, ArrayBufferView, URLSearchParams
+   * - Browser only: FormData, File, Blob
+   * - Node only: Stream, Buffer
+   */
+  data?: any;
+  /**
+   * **timeout** specifies the number of milliseconds before the request times out.
+   * If the request takes longer than `timeout`, the request will be aborted.
+   * Default is 10000 (10 seconds).
+   */
   timeout?: number;
+  /**
+   * **withCredentials** indicates whether or not cross-site Access-Control requests
+   * should be made using credentials
+   */
+  withCredentials?: boolean;
+  /**
+   * **responseType** indicates the type of data that the server will respond with
+   * options are: 'arraybuffer', 'document', 'json', 'text', 'stream'
+   * browser only: 'blob'
+   */
   responseType?: ResponseType;
 
-  // Debug settings
+  /**
+   * **debug** is boolean value to enable console log
+   */
   debug?: boolean;
 
-  // Retry settings
+  /**
+   * **retryMax** is the number value to retry against failed requests
+   * Default to 5 retries (retryMax = 5)
+   */
   retryMax?: number;
+  /**
+   * **retrySec** is the number value to retry failed requests with this time spacing
+   * Note that one Axios request could run for retryMax * retrySec seconds
+   */
   retrySec?: number;
 
-  // Axios instance
+  /**
+   * Axios instance to provide (Will use Axios installed by peerDeps if not supplied)
+   */
   axios?: AxiosStatic;
-  // Optional callback function to retrive connection status
+  /**
+   * **callback** is the callback function to debug on going requests while promise is not resolved.
+   * Will return AxiosResponseExtended for every requests sent.
+   */
   callback?: callback;
-  // Optional callback function to execute when finished
+  /**
+   * **finishCallback** is the callback function called when the promise is resolved.
+   */
   finishCallback?: finishCallback;
 
-  // Use user provided http.Agent compatible agent
+  /**
+   * http.Agent class object, nodejs only https://nodejs.org/api/http.html#class-httpagent
+   */
   httpAgent?: HTTPAgent;
+  /**
+   * https.Agent class object, nodejs only https://nodejs.org/api/https.html#class-httpsagent
+   */
   httpsAgent?: HTTPSAgent;
 
-  // Force credentials
-  withCredentials?: boolean;
-
-  // SocksProxy related
-  onion_url?: string;
-  socks_enabled?: boolean;
-  socks_isTor?: boolean;
+  /**
+   * **socks_proxy_agent** is the SocksProxyAgent instance to use, should be supplied if you want to enable socks proxy connection
+   * Example: const { SocksProxyAgent } = require('socks-proxy-agent'); config.socks_proxy_agent = SocksProxyAgent;
+   */
   socks_proxy_agent?: any;
+  /**
+   * Setting this option to true will enable socks proxy connection
+   */
+  socks_enabled?: boolean;
+  /**
+   * Setting this option to true will enable automatic socket change for Tor when the server returns HTTP error like 429 Too many requests
+   */
+  socks_isTor?: boolean;
+  /**
+   * Supply HTTP onion url if the config.url is HTTPS address of the server
+   */
+  onion_url?: string;
+  /**
+   * Setting this option to true will enable connecting to onion_url
+   */
   socks_onion?: boolean;
+  /**
+   * Hostname of socks proxy
+   */
   socks_host?: string;
+  /**
+   * Port of socks proxy
+   */
   socks_port?: number;
+  /**
+   * Username of socks proxy
+   */
   socks_username?: string;
+  /**
+   * Password of socks proxy
+   */
   socks_password?: string;
 }
 
-export interface fetchConfig extends getConfig {
-  url: string;
-  data?: any;
-}
+/**
+ * Fetch config used for GET, POST function
+ **/
+export type getConfig = Omit<fetchConfig, 'url' | 'data'>;
 
-interface axiosOptions {
+/**
+ * Identical with AxiosRequestConfig
+ **/
+interface AxiosConfig extends Omit<AxiosRequestConfig, 'url' | 'method' | 'timeout' | 'validateStatus' | 'httpAgent' | 'httpsAgent'> {
   url: string;
   method: Method | string;
-  headers?: AxiosRequestHeaders;
-  data?: any;
   timeout: number;
-  responseType?: ResponseType;
   validateStatus: (status: number) => boolean;
   httpAgent?: HTTPAgent;
   httpsAgent?: HTTPSAgent;
 }
 
+/**
+ * Options for SocksProxyAgent
+ **/
 interface socksOptions {
   agentOptions: {
     keepAlive: boolean;
   };
+  /**
+   * Hostname of socks proxy
+   */
   hostname?: string;
+  /**
+   * Port of socks proxy
+   */
   port?: number;
+  /**
+   * Username of socks proxy
+   */
   username?: string;
+  /**
+   * Password of socks proxy
+   */
   password?: string;
 }
 
-interface socksAgentOptions {
+/**
+ * HTTP Agent Objects for Node.js
+ */
+interface AgentOptions {
+  /**
+   * http.Agent() class object
+   */
   httpAgent?: HTTPAgent;
+  /**
+   * https.Agent() class object
+   */
   httpsAgent?: HTTPSAgent;
 }
 
-function createSocksOptions(config: fetchConfig, url: string, retry: number): socksAgentOptions {
+/**
+ * Generate socks proxy agent from config
+ * @param config Main Config from fetch function
+ * @param url URL string from Config
+ * @param count Request count to reset circut when using Tor Proxy
+ * @returns AgentOptions http.Agent() compatible class object
+ **/
+function createSocksOptions(config: fetchConfig, url: string, count: number): AgentOptions {
   const SocksProxyAgent = config.socks_proxy_agent;
   const socksOptions: socksOptions = {
     agentOptions: {
@@ -104,14 +264,14 @@ function createSocksOptions(config: fetchConfig, url: string, retry: number): so
     hostname: config.socks_host,
     port: config.socks_port
   };
-  const axiosOptions: socksAgentOptions = {};
+  const axiosOptions: AgentOptions = {};
 
   if (!!config.socks_username && !!config.socks_password) {
     socksOptions.username = config.socks_username;
     socksOptions.password = config.socks_password;
   } else if (config.socks_isTor === true) {
     // Retry with different tor circuits https://stackoverflow.com/a/64960234
-    socksOptions.username = `circuit${retry}`;
+    socksOptions.username = `circuit${count}`;
   }
 
   // Handle proxy agent for onion addresses
@@ -126,19 +286,18 @@ function createSocksOptions(config: fetchConfig, url: string, retry: number): so
 
 /**
   Axios Request Wrapper function that supports automatic retries based on configuration
-
-  (Also supports Tor Connection for privacy)
-  https://github.com/axios/axios/blob/a02fe284dfa9161a548b5c079c43ee0f9dfba053/index.d.ts#L191
+  @param config FetchConfig Axios Wrapper config
+  @returns Promise<any> Data of AxiosResponse
 **/
 export async function fetch(config: fetchConfig): Promise<any> {
   // User-Agent of Tor Browser
   const defaultHeaders = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0'
   };
-  const axiosOptions: axiosOptions = {
+  const axiosOptions: AxiosConfig = {
     url: (config.socks_enabled === true && config.socks_onion === true && !!config.onion_url) ? (config.onion_url || config.url) : config.url,
     method: config.method ?? 'GET',
-    timeout: config.timeout ?? config.socks_enabled ? 30000: 10000,
+    timeout: config.timeout ?? (config.socks_enabled ? 30000: 10000),
     validateStatus: (status) => status >= 200 && status < 300,
   };
   if (config.responseType) {
@@ -157,16 +316,16 @@ export async function fetch(config: fetchConfig): Promise<any> {
   const axiosInstance = config.axios ?? axios;
   const retryMax = config.retryMax ?? 5;
   const retrySec = config.retrySec ?? 60;
-  let retry = 0;
+  let count = 0;
 
-  while (retry < retryMax) {
+  while (count <= retryMax) {
     try {
       /**
         Browsers don't need tor socket support (Node.js only feature)
       **/
       if (isBrowser === false) {
         if (config.socks_enabled === true && config.socks_proxy_agent) {
-          const socksOptions = createSocksOptions(config, axiosOptions.url, retry);
+          const socksOptions = createSocksOptions(config, axiosOptions.url, count);
           // Handle proxy agent for onion addresses
           if (getProtocol(axiosOptions.url) === 'http') {
             axiosOptions.httpAgent = socksOptions.httpAgent;
@@ -182,12 +341,14 @@ export async function fetch(config: fetchConfig): Promise<any> {
 
       const response = await axiosInstance(axiosOptions);
 
-      if (typeof config.callback === 'function') {
-        config.callback({ ...response, error: false });
-      }
-
       if (response.statusText === 'error') {
         throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
+      }
+
+      count++;
+
+      if (typeof config.callback === 'function') {
+        config.callback({ ...response, error: false, count });
       }
 
       if (config.debug === true && response.config) {
@@ -206,14 +367,14 @@ export async function fetch(config: fetchConfig): Promise<any> {
           console.error(`Request to ${e.response.config.url} failed with code ${e.response.status}`);
         }
         if (typeof config.callback === 'function') {
-          config.callback({ ...e.response, error: true });
+          config.callback({ ...e.response, error: true, count });
         }
       }
-      // Disable failure delay when retry is disabled with option retryMax: 1
-      if (retryMax !== 1) {
+      // Disable failure delay when retry is disabled with option retryMax: 0
+      if (retryMax !== 0) {
         await setDelay(retrySec);
       }
-      if (retry === retryMax - 1) {
+      if (count >= retryMax) {
         if (typeof config.finishCallback === 'function') {
           if (e.response) {
             config.finishCallback({ ...e.response, error: e });
@@ -223,19 +384,20 @@ export async function fetch(config: fetchConfig): Promise<any> {
         }
         throw e;
       }
-      retry++;
     }
   }
 }
 
 /**
-  Using Promise.any() to implement browser side fault tolerant load balancer that could fetch non-failed results as fast as possible
-
-  Promises created from multiple URLs wouldn't resolve until retryMax * retrySec,
-
-  if you have supplied a callback function to get results, it will have every results including for those failed ones.
-
-  See more about https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/any.
+ * Using Promise.any() to implement browser side fault tolerant load balancer that could fetch non-failed results as fast as possible
+ * - Promises created from multiple URLs wouldn't resolve until retryMax * retrySec,
+ * - if you have supplied a callback function to get results, it will have every results including for those failed ones.
+ * - See more about https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/any.
+ * @param url URL string from Config
+ * @param config FetchConfig Axios Wrapper config
+ * @param method HTTP request method
+ * @param data POST data
+ * @returns Promise<any> Promise Data of AxiosResponse
 **/
 export async function multiFetch(url: string, config: getConfig, method?: string, data?: any): Promise<any> {
   // Remove any spacing available from url string, and split to array by commas
@@ -247,10 +409,23 @@ export async function multiFetch(url: string, config: getConfig, method?: string
   return fetch({ url, method, data, ...config });
 }
 
+/**
+ * Function equivalent with axios.get()
+ * @param url URL string from Config
+ * @param config FetchConfig Axios Wrapper config
+ * @returns Promise<any> Promise Data of AxiosResponse
+**/
 export function get(url: string, config: getConfig): Promise<any> {
   return multiFetch(url, config);
 }
 
+/**
+ * Function equivalent with axios.post()
+ * @param url URL string from Config
+ * @param data POST data
+ * @param config FetchConfig Axios Wrapper config
+ * @returns Promise<any> Promise Data of AxiosResponse
+**/
 export function post(url: string, data: any, config: getConfig): Promise<any> {
   return multiFetch(url, config, 'post', data);
 }

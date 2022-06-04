@@ -8,21 +8,40 @@
 [![GitHub Clones](https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=uniques&url=https://github.com/ayanamitech/node-github-repo-stats/blob/main/data/ayanamitech/axios-auto/clone.json?raw=True&logo=github)](https://github.com/ayanamitech/axios-auto)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
+- [About](#about)
+- [Installation](#installation)
+- [Documentation](#documentation)
+- [Usage](#usage)
+  - [Browser](#browser)
+  - [Example](#example)
+
+## About
+
 > Simple Axios wrapper with basic retry & tor support
 
-Handle asynchronous Axios Requests without hassle of network connectivity
+`axios-auto` is an easy to use [Axios](https://axios-http.com/) client wrapper function that transforms your favoriate HTTP client library to fault tolerant [client-side load balancer](https://docs.microsoft.com/en-us/aspnet/core/grpc/loadbalancing?view=aspnetcore-6.0).
 
-## Install
+## Installation
 
 **Node.js**
 
 ```sh
-# Wouldn't work without axios already installed
+# Wouldn't work without axios installed
 npm install axios
 npm install axios-auto
 ```
 
-**Browser**
+## Documentation
+
+https://ayanamitech.github.io/axios-auto
+
+## Usage
+
+### Browser
+
+Every release of `axios-auto` will have new build of `./dist/browser/index.js` for use in the browser. To get access to module classes use `axios` global variable.
+
+> WARN: We recommend hosting and controlling your own copy for security reasons
 
 ```html
 <!-- Since Browser bundle comes with axios built in, no need to add additional axios dependency -->
@@ -34,7 +53,7 @@ npm install axios-auto
 <script src="https://unpkg.com/axios-auto@latest"></script>
 ```
 
-## Example
+### Example
 
 ```js
 // CommonJS

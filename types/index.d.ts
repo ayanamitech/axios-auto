@@ -1,22 +1,35 @@
 /// <reference types="node" />
 /// <reference types="node" />
 import './promise';
-import { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders } from 'axios';
+import { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
 export interface AxiosResponseExtended extends AxiosResponse {
     error: boolean;
+    count: number;
+}
+export interface AxiosResponseResult {
+    data?: any;
+    status?: number;
+    statusText?: string;
+    headers?: AxiosResponseHeaders;
+    config: AxiosRequestConfig;
+    request?: any;
+    error: null | Error;
 }
 export interface callback {
     (message: AxiosResponseExtended): void;
 }
 export interface finishCallback {
-    (message: any): void;
+    (message: AxiosResponseResult): void;
 }
-export interface getConfig {
+export interface fetchConfig {
+    url: string;
     method?: Method | string;
     headers?: AxiosRequestHeaders;
+    data?: any;
     timeout?: number;
+    withCredentials?: boolean;
     responseType?: ResponseType;
     debug?: boolean;
     retryMax?: number;
@@ -26,21 +39,17 @@ export interface getConfig {
     finishCallback?: finishCallback;
     httpAgent?: HTTPAgent;
     httpsAgent?: HTTPSAgent;
-    withCredentials?: boolean;
-    onion_url?: string;
+    socks_proxy_agent?: any;
     socks_enabled?: boolean;
     socks_isTor?: boolean;
-    socks_proxy_agent?: any;
+    onion_url?: string;
     socks_onion?: boolean;
     socks_host?: string;
     socks_port?: number;
     socks_username?: string;
     socks_password?: string;
 }
-export interface fetchConfig extends getConfig {
-    url: string;
-    data?: any;
-}
+export declare type getConfig = Omit<fetchConfig, 'url' | 'data'>;
 export declare function fetch(config: fetchConfig): Promise<any>;
 export declare function multiFetch(url: string, config: getConfig, method?: string, data?: any): Promise<any>;
 export declare function get(url: string, config: getConfig): Promise<any>;

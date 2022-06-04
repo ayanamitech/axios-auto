@@ -1,6 +1,6 @@
-import { fetch, get, post } from './index';
+import { fetch, get, post, AxiosResponseExtended, AxiosResponseResult } from './index';
 import { strict as assert } from 'assert';
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
 describe('axios-auto', () => {
@@ -9,58 +9,88 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing axios-auto', date: new Date().toString() };
     mock.onGet('/hello').reply(200, msg);
-    const result = await fetch({ axios: axiosInstance, url: '/hello', timeout: 0 });
+    const result = await fetch({ axios: axiosInstance, url: '/hello', timeout: 100 });
     assert.deepEqual(result, msg);
   });
   it('fail once', async () => {
-    let count = 0;
     const axiosInstance = axios;
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing fail once', date: new Date().toString() };
-    const callback = (r: AxiosResponse) => {
-      if (count === 0) {
+    const callback = (r: AxiosResponseExtended) => {
+      if (r.count === 0) {
+        assert.ok(r.error);
         assert.strictEqual(r.status, 429);
         assert.strictEqual(r.data, 'Too Many Requests');
+        assert.strictEqual(r.config.timeout, 100);
+        assert.strictEqual(r.config.url, '/once');
+        assert.strictEqual(r.config.method, 'get');
         assert.strictEqual(r.request.responseURL, '/once');
-        count++;
         return;
       }
-      if (count === 1) {
+      if (r.count === 1) {
+        assert.ok(r.error === false);
         assert.strictEqual(r.status, 200);
+        assert.deepStrictEqual(r.data, msg);
+        assert.strictEqual(r.config.timeout, 100);
+        assert.strictEqual(r.config.url, '/once');
+        assert.strictEqual(r.config.method, 'get');
         assert.strictEqual(r.request.responseURL, '/once');
-        count++;
         return;
       }
       assert.fail('Should not retry after success');
+    };
+    const finishCallback = (r: AxiosResponseResult) => {
+      assert.strictEqual(r.error, null);
+      assert.strictEqual(r.status, 200);
+      assert.deepStrictEqual(r.data, msg);
+      assert.strictEqual(r.config.timeout, 100);
+      assert.strictEqual(r.config.url, '/once');
+      assert.strictEqual(r.config.method, 'get');
+      assert.strictEqual(r.request.responseURL, '/once');
     };
     mock
       .onGet('/once')
       .replyOnce(429, 'Too Many Requests')
       .onGet('/once')
       .reply(200, msg);
-    const result = await fetch({ axios: axiosInstance, url: '/once', callback, timeout: 0, retrySec: 3 });
+    const result = await fetch({ axios: axiosInstance, url: '/once', callback, finishCallback, timeout: 100, retrySec: 3, retryMax: 1 });
     assert.deepEqual(result, msg);
   });
   it('fail thrice', async () => {
-    let count = 0;
     const axiosInstance = axios;
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing fail thrice', date: new Date().toString() };
-    const callback = (r: AxiosResponse) => {
-      if (count < 3) {
+    const callback = (r: AxiosResponseExtended) => {
+      if (r.count < 3) {
+        assert.ok(r.error);
         assert.strictEqual(r.status, 429);
         assert.strictEqual(r.data, 'Too Many Requests');
+        assert.strictEqual(r.config.timeout, 100);
+        assert.strictEqual(r.config.url, '/thrice');
+        assert.strictEqual(r.config.method, 'get');
         assert.strictEqual(r.request.responseURL, '/thrice');
-        count++;
         return;
       }
-      if (count === 3) {
+      if (r.count === 3) {
+        assert.ok(r.error === false);
         assert.strictEqual(r.status, 200);
+        assert.deepStrictEqual(r.data, msg);
+        assert.strictEqual(r.config.timeout, 100);
+        assert.strictEqual(r.config.url, '/thrice');
+        assert.strictEqual(r.config.method, 'get');
         assert.strictEqual(r.request.responseURL, '/thrice');
-        count++;
         return;
       }
       assert.fail('Should not retry after success');
+    };
+    const finishCallback = (r: AxiosResponseResult) => {
+      assert.strictEqual(r.error, null);
+      assert.strictEqual(r.status, 200);
+      assert.deepStrictEqual(r.data, msg);
+      assert.strictEqual(r.config.timeout, 100);
+      assert.strictEqual(r.config.url, '/thrice');
+      assert.strictEqual(r.config.method, 'get');
+      assert.strictEqual(r.request.responseURL, '/thrice');
     };
     mock
       .onGet('/thrice')
@@ -71,17 +101,26 @@ describe('axios-auto', () => {
       .replyOnce(429, 'Too Many Requests')
       .onGet('/thrice')
       .reply(200, msg);
-    const result = await fetch({ axios: axiosInstance, url: '/thrice', callback, timeout: 0, retrySec: 3 });
+    const result = await fetch({ axios: axiosInstance, url: '/thrice', callback, finishCallback, timeout: 100, retrySec: 3, retryMax: 3 });
     assert.deepEqual(result, msg);
   });
   it('fail report', async () => {
     const axiosInstance = axios;
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing fail report', date: new Date().toString() };
+    const finishCallback = (r: AxiosResponseResult) => {
+      assert.ok(r.error instanceof Error);
+      assert.strictEqual(r.status, 429);
+      assert.deepStrictEqual(r.data, msg);
+      assert.strictEqual(r.config.timeout, 100);
+      assert.strictEqual(r.config.url, '/fail');
+      assert.strictEqual(r.config.method, 'get');
+      assert.strictEqual(r.request.responseURL, '/fail');
+    };
     mock
       .onGet('/fail')
       .reply(429, msg);
-    await assert.rejects(async () => await fetch({ axios: axiosInstance, url: '/fail', timeout: 0, retryMax: 1, retrySec: 3 }), {
+    await assert.rejects(async () => await fetch({ axios: axiosInstance, url: '/fail', finishCallback, timeout: 100, retrySec: 3, retryMax: 0 }), {
       name: /^Error$/,
       message: /Request failed with status code 429/
     });
@@ -91,7 +130,7 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing GET request', date: new Date().toString() };
     mock.onGet('/get').reply(200, msg);
-    const result = await get('/get', { axios: axiosInstance, timeout: 0 });
+    const result = await get('/get', { axios: axiosInstance, timeout: 0, retryMax: 0 });
     assert.deepEqual(result, msg);
   });
   it('GET request fail test', async () => {
@@ -99,7 +138,7 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing GET fail request', date: new Date().toString() };
     mock.onGet('/get').reply(200, msg);
-    await assert.rejects(async () => await get('/getFail', { axios: axiosInstance, timeout: 0, retryMax: 1, retrySec: 3  }), {
+    await assert.rejects(async () => await get('/getFail', { axios: axiosInstance, timeout: 100, retrySec: 3, retryMax: 0  }), {
       name: /^Error$/,
       message: /Request failed with status code 404/
     });
@@ -110,7 +149,7 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance, { onNoMatch: 'throwException' });
     const msg = { msg: 'Testing POST request', date: new Date().toString() };
     mock.onPost('/post', { id: 1 }).reply(200, msg);
-    const result = await post('/post', { id: 1 }, { axios: axiosInstance, timeout: 0, retryMax: 1, retrySec: 3 });
+    const result = await post('/post', { id: 1 }, { axios: axiosInstance, timeout: 100, retryMax: 0, retrySec: 3 });
     assert.strictEqual(result.error, undefined);
     assert.deepEqual(result, msg);
   });
@@ -119,7 +158,7 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing POST fail request', date: new Date().toString() };
     mock.onPost('/postFail', { id: 1 }).reply(200, msg);
-    await assert.rejects(async () => await post('/postFail', { id: 2 }, { axios: axiosInstance, timeout: 0, retryMax: 1, retrySec: 3  }), {
+    await assert.rejects(async () => await post('/postFail', { id: 2 }, { axios: axiosInstance, timeout: 100, retryMax: 0, retrySec: 3  }), {
       name: /^Error$/,
       message: /Request failed with status code 404/
     });
