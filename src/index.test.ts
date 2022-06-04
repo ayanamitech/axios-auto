@@ -19,15 +19,15 @@ describe('axios-auto', () => {
     const msg = { msg: 'Testing fail once', date: new Date().toString() };
     const callback = (r: AxiosResponse) => {
       if (count === 0) {
-        assert.equal(r.status, 429);
-        assert.equal(r.data, 'Too Many Requests');
-        assert.equal(r.request.responseURL, '/once');
+        assert.strictEqual(r.status, 429);
+        assert.strictEqual(r.data, 'Too Many Requests');
+        assert.strictEqual(r.request.responseURL, '/once');
         count++;
         return;
       }
       if (count === 1) {
-        assert.equal(r.status, 200);
-        assert.equal(r.request.responseURL, '/once');
+        assert.strictEqual(r.status, 200);
+        assert.strictEqual(r.request.responseURL, '/once');
         count++;
         return;
       }
@@ -48,15 +48,15 @@ describe('axios-auto', () => {
     const msg = { msg: 'Testing fail thrice', date: new Date().toString() };
     const callback = (r: AxiosResponse) => {
       if (count < 3) {
-        assert.equal(r.status, 429);
-        assert.equal(r.data, 'Too Many Requests');
-        assert.equal(r.request.responseURL, '/thrice');
+        assert.strictEqual(r.status, 429);
+        assert.strictEqual(r.data, 'Too Many Requests');
+        assert.strictEqual(r.request.responseURL, '/thrice');
         count++;
         return;
       }
       if (count === 3) {
-        assert.equal(r.status, 200);
-        assert.equal(r.request.responseURL, '/thrice');
+        assert.strictEqual(r.status, 200);
+        assert.strictEqual(r.request.responseURL, '/thrice');
         count++;
         return;
       }
@@ -111,7 +111,7 @@ describe('axios-auto', () => {
     const msg = { msg: 'Testing POST request', date: new Date().toString() };
     mock.onPost('/post', { id: 1 }).reply(200, msg);
     const result = await post('/post', { id: 1 }, { axios: axiosInstance, timeout: 0, retryMax: 1, retrySec: 3 });
-    assert.equal(result.error, undefined);
+    assert.strictEqual(result.error, undefined);
     assert.deepEqual(result, msg);
   });
   it('POST request fail test', async () => {

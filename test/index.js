@@ -9,6 +9,38 @@ function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'defau
 var axios__default = /*#__PURE__*/_interopDefaultLegacy(axios);
 var MockAdapter__default = /*#__PURE__*/_interopDefaultLegacy(MockAdapter);
 
+Promise.any = (values) => {
+  return new Promise((resolve, reject) => {
+    var _a;
+    let hasResolved = false;
+    const promiseLikes = [];
+    let iterableCount = 0;
+    const rejectionReasons = [];
+    function resolveOnce(value) {
+      if (!hasResolved) {
+        hasResolved = true;
+        resolve(value);
+      }
+    }
+    function rejectionCheck(reason) {
+      rejectionReasons.push(reason);
+      if (rejectionReasons.length >= iterableCount)
+        reject(rejectionReasons);
+    }
+    for (const value of values) {
+      iterableCount++;
+      promiseLikes.push(value);
+    }
+    for (const promiseLike of promiseLikes) {
+      if ((promiseLike == null ? void 0 : promiseLike.then) !== void 0 || (promiseLike == null ? void 0 : promiseLike.catch) !== void 0) {
+        (_a = promiseLike == null ? void 0 : promiseLike.then((result) => resolveOnce(result))) == null ? void 0 : _a.catch(() => void 0);
+        promiseLike == null ? void 0 : promiseLike.catch((reason) => rejectionCheck(reason));
+      } else
+        resolveOnce(promiseLike);
+    }
+  });
+};
+
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
@@ -122,11 +154,18 @@ async function fetch(config) {
     }
   }
 }
+async function multiFetch(url, config, method, data) {
+  const urls = url.replace(/\s+/g, "").split(",");
+  if (urls.length !== 1) {
+    return Promise.any(urls.map((u) => fetch(__spreadValues({ url: u, method, data }, config))));
+  }
+  return fetch(__spreadValues({ url, method, data }, config));
+}
 function get(url, config) {
-  return fetch(__spreadValues({ url }, config));
+  return multiFetch(url, config);
 }
 function post(url, data, config) {
-  return fetch(__spreadValues({ url, method: "post", data }, config));
+  return multiFetch(url, config, "post", data);
 }
 
 describe("axios-auto", () => {
@@ -145,15 +184,15 @@ describe("axios-auto", () => {
     const msg = { msg: "Testing fail once", date: new Date().toString() };
     const callback = (r) => {
       if (count === 0) {
-        assert.strict.equal(r.status, 429);
-        assert.strict.equal(r.data, "Too Many Requests");
-        assert.strict.equal(r.request.responseURL, "/once");
+        assert.strict.strictEqual(r.status, 429);
+        assert.strict.strictEqual(r.data, "Too Many Requests");
+        assert.strict.strictEqual(r.request.responseURL, "/once");
         count++;
         return;
       }
       if (count === 1) {
-        assert.strict.equal(r.status, 200);
-        assert.strict.equal(r.request.responseURL, "/once");
+        assert.strict.strictEqual(r.status, 200);
+        assert.strict.strictEqual(r.request.responseURL, "/once");
         count++;
         return;
       }
@@ -170,15 +209,15 @@ describe("axios-auto", () => {
     const msg = { msg: "Testing fail thrice", date: new Date().toString() };
     const callback = (r) => {
       if (count < 3) {
-        assert.strict.equal(r.status, 429);
-        assert.strict.equal(r.data, "Too Many Requests");
-        assert.strict.equal(r.request.responseURL, "/thrice");
+        assert.strict.strictEqual(r.status, 429);
+        assert.strict.strictEqual(r.data, "Too Many Requests");
+        assert.strict.strictEqual(r.request.responseURL, "/thrice");
         count++;
         return;
       }
       if (count === 3) {
-        assert.strict.equal(r.status, 200);
-        assert.strict.equal(r.request.responseURL, "/thrice");
+        assert.strict.strictEqual(r.status, 200);
+        assert.strict.strictEqual(r.request.responseURL, "/thrice");
         count++;
         return;
       }
@@ -222,7 +261,7 @@ describe("axios-auto", () => {
     const msg = { msg: "Testing POST request", date: new Date().toString() };
     mock.onPost("/post", { id: 1 }).reply(200, msg);
     const result = await post("/post", { id: 1 }, { axios: axiosInstance, timeout: 0, retryMax: 1, retrySec: 3 });
-    assert.strict.equal(result.error, void 0);
+    assert.strict.strictEqual(result.error, void 0);
     assert.strict.deepEqual(result, msg);
   });
   it("POST request fail test", async () => {

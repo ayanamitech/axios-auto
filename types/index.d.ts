@@ -1,5 +1,6 @@
 /// <reference types="node" />
 /// <reference types="node" />
+import './promise';
 import { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
@@ -34,6 +35,7 @@ export interface fetchConfig extends getConfig {
     data?: any;
 }
 export declare function fetch(config: fetchConfig): Promise<any>;
+export declare function multiFetch(url: string, config: getConfig, method?: string, data?: any): Promise<any>;
 export declare function get(url: string, config: getConfig): Promise<any>;
 export declare function post(url: string, data: any, config: getConfig): Promise<any>;
-export default fetch;
+export default multiFetch;

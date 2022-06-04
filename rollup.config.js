@@ -1,6 +1,5 @@
 import fs from 'fs';
 import esbuild from 'rollup-plugin-esbuild';
-
 const license = fs.readFileSync("LICENSE", {encoding: "utf-8"});
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
@@ -77,7 +76,32 @@ const test = {
   ],
 };
 
+// promise
+const promise = {
+  input: 'src/promise.test.ts',
+  plugins: [
+    esbuild({
+      include: /\.[jt]sx?$/,
+      exclude: /node_modules/,
+      minify: false,
+      sourceMap: false,
+      target: 'node12',
+      tsconfig: 'tsconfig.json'
+    }),
+  ],
+  external: externalTest,
+  output: [
+    {
+      file: 'test/promise.js',
+      format: "cjs",
+      esModule: false,
+      exports: 'named',
+    },
+  ],
+};
+
 export default [
   main,
-  test
+  test,
+  promise
 ];

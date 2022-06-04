@@ -1,3 +1,4 @@
+import './promise';
 import axios, { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
@@ -206,12 +207,31 @@ export async function fetch(config: fetchConfig): Promise<any> {
   }
 }
 
+/**
+  Using Promise.any() to implement browser side fault tolerant load balancer that could fetch non-failed results as fast as possible
+
+  Promises created from multiple URLs wouldn't resolve until retryMax * retrySec,
+
+  if you have supplied a callback function to get results, it will have every results including for those failed ones.
+
+  See more about https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/any.
+**/
+export async function multiFetch(url: string, config: getConfig, method?: string, data?: any): Promise<any> {
+  // Remove any spacing available from url string, and split to array by commas
+  const urls = url.replace(/\s+/g, '').split(',');
+  // Disable multiFetch when there is no Promise.any defined (Or no promise-any-polyfill);
+  if (urls.length !== 1) {
+    return Promise.any(urls.map(u => fetch({ url: u, method, data, ...config })));
+  }
+  return fetch({ url, method, data, ...config });
+}
+
 export function get(url: string, config: getConfig): Promise<any> {
-  return fetch({ url, ...config });
+  return multiFetch(url, config);
 }
 
 export function post(url: string, data: any, config: getConfig): Promise<any> {
-  return fetch({ url, method: 'post', data, ...config });
+  return multiFetch(url, config, 'post', data);
 }
 
-export default fetch;
+export default multiFetch;
