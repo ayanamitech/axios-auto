@@ -9,8 +9,16 @@ const setDelay = (secs: number): Promise<void> => new Promise(resolve => setTime
 
 const getProtocol = (url: string): string => new URL(url).protocol.split(':')[0];
 
+export interface AxiosResponseExtended extends AxiosResponse {
+  error: boolean
+}
+
 export interface callback {
-  (message:AxiosResponse): void;
+  (message:AxiosResponseExtended): void;
+}
+
+export interface finishCallback {
+  (message:any): void;
 }
 
 /**
@@ -33,6 +41,8 @@ export interface getConfig {
   axios?: AxiosStatic;
   // Optional callback function to retrive connection status
   callback?: callback;
+  // Optional callback function to execute when finished
+  finishCallback?: finishCallback;
 
   // Use user provided http.Agent compatible agent
   httpAgent?: HTTPAgent;
@@ -173,7 +183,7 @@ export async function fetch(config: fetchConfig): Promise<any> {
       const response = await axiosInstance(axiosOptions);
 
       if (typeof config.callback === 'function') {
-        config.callback(response);
+        config.callback({ ...response, error: false });
       }
 
       if (response.statusText === 'error') {
@@ -185,6 +195,10 @@ export async function fetch(config: fetchConfig): Promise<any> {
         console.log(`Sending ${response.config.method?.toUpperCase()} request to ${response.config.url} using Agent ${agent}`);
       }
 
+      if (typeof config.finishCallback === 'function') {
+        config.finishCallback({ ...response, error: null });
+      }
+
       return response.data;
     } catch (e: any) {
       if (e.response?.config?.url && e.response?.status) {
@@ -192,7 +206,7 @@ export async function fetch(config: fetchConfig): Promise<any> {
           console.error(`Request to ${e.response.config.url} failed with code ${e.response.status}`);
         }
         if (typeof config.callback === 'function') {
-          config.callback(e.response);
+          config.callback({ ...e.response, error: true });
         }
       }
       // Disable failure delay when retry is disabled with option retryMax: 1
@@ -200,6 +214,13 @@ export async function fetch(config: fetchConfig): Promise<any> {
         await setDelay(retrySec);
       }
       if (retry === retryMax - 1) {
+        if (typeof config.finishCallback === 'function') {
+          if (e.response) {
+            config.finishCallback({ ...e.response, error: e });
+          } else {
+            config.finishCallback({ config: axiosOptions, error: e });
+          }
+        }
         throw e;
       }
       retry++;

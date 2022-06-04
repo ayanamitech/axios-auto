@@ -21,7 +21,7 @@ function getTimedRejectingPromise(msToReject, rejectValue) {
     setTimeout(() => reject(rejectValue), msToReject);
   });
 }
-describe("testing promise.any polyfill", () => {
+describe("promise.any", () => {
   it("The first resolving Promise should be acted upon.", async () => {
     const promises = [
       getTimedResolvingPromise(20, "yes"),

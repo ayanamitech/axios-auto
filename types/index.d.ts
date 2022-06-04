@@ -4,8 +4,14 @@ import './promise';
 import { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
+export interface AxiosResponseExtended extends AxiosResponse {
+    error: boolean;
+}
 export interface callback {
-    (message: AxiosResponse): void;
+    (message: AxiosResponseExtended): void;
+}
+export interface finishCallback {
+    (message: any): void;
 }
 export interface getConfig {
     method?: Method | string;
@@ -17,6 +23,7 @@ export interface getConfig {
     retrySec?: number;
     axios?: AxiosStatic;
     callback?: callback;
+    finishCallback?: finishCallback;
     httpAgent?: HTTPAgent;
     httpsAgent?: HTTPSAgent;
     withCredentials?: boolean;

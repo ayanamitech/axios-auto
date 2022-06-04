@@ -14,6 +14,8 @@ var MockAdapter__default = /*#__PURE__*/_interopDefaultLegacy(MockAdapter);
 Promise.any = PromiseAny__default["default"];
 
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -29,6 +31,7 @@ var __spreadValues = (a, b) => {
     }
   return a;
 };
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 const isBrowser = typeof window !== "undefined";
 const setDelay = (secs) => new Promise((resolve) => setTimeout(() => resolve(), secs * 1e3));
 const getProtocol = (url) => new URL(url).protocol.split(":")[0];
@@ -97,7 +100,7 @@ async function fetch(config) {
       }
       const response = await axiosInstance(axiosOptions);
       if (typeof config.callback === "function") {
-        config.callback(response);
+        config.callback(__spreadProps(__spreadValues({}, response), { error: false }));
       }
       if (response.statusText === "error") {
         throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
@@ -106,6 +109,9 @@ async function fetch(config) {
         const agent = (_g = response.config.headers) == null ? void 0 : _g["User-Agent"];
         console.log(`Sending ${(_h = response.config.method) == null ? void 0 : _h.toUpperCase()} request to ${response.config.url} using Agent ${agent}`);
       }
+      if (typeof config.finishCallback === "function") {
+        config.finishCallback(__spreadProps(__spreadValues({}, response), { error: null }));
+      }
       return response.data;
     } catch (e) {
       if (((_j = (_i = e.response) == null ? void 0 : _i.config) == null ? void 0 : _j.url) && ((_k = e.response) == null ? void 0 : _k.status)) {
@@ -113,13 +119,20 @@ async function fetch(config) {
           console.error(`Request to ${e.response.config.url} failed with code ${e.response.status}`);
         }
         if (typeof config.callback === "function") {
-          config.callback(e.response);
+          config.callback(__spreadProps(__spreadValues({}, e.response), { error: true }));
         }
       }
       if (retryMax !== 1) {
         await setDelay(retrySec);
       }
       if (retry === retryMax - 1) {
+        if (typeof config.finishCallback === "function") {
+          if (e.response) {
+            config.finishCallback(__spreadProps(__spreadValues({}, e.response), { error: e }));
+          } else {
+            config.finishCallback({ config: axiosOptions, error: e });
+          }
+        }
         throw e;
       }
       retry++;
