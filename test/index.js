@@ -1,45 +1,17 @@
 'use strict';
 
+var PromiseAny = require('promise.any');
 var axios = require('axios');
 var assert = require('assert');
 var MockAdapter = require('axios-mock-adapter');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
+var PromiseAny__default = /*#__PURE__*/_interopDefaultLegacy(PromiseAny);
 var axios__default = /*#__PURE__*/_interopDefaultLegacy(axios);
 var MockAdapter__default = /*#__PURE__*/_interopDefaultLegacy(MockAdapter);
 
-Promise.any = (values) => {
-  return new Promise((resolve, reject) => {
-    var _a;
-    let hasResolved = false;
-    const promiseLikes = [];
-    let iterableCount = 0;
-    const rejectionReasons = [];
-    function resolveOnce(value) {
-      if (!hasResolved) {
-        hasResolved = true;
-        resolve(value);
-      }
-    }
-    function rejectionCheck(reason) {
-      rejectionReasons.push(reason);
-      if (rejectionReasons.length >= iterableCount)
-        reject(rejectionReasons);
-    }
-    for (const value of values) {
-      iterableCount++;
-      promiseLikes.push(value);
-    }
-    for (const promiseLike of promiseLikes) {
-      if ((promiseLike == null ? void 0 : promiseLike.then) !== void 0 || (promiseLike == null ? void 0 : promiseLike.catch) !== void 0) {
-        (_a = promiseLike == null ? void 0 : promiseLike.then((result) => resolveOnce(result))) == null ? void 0 : _a.catch(() => void 0);
-        promiseLike == null ? void 0 : promiseLike.catch((reason) => rejectionCheck(reason));
-      } else
-        resolveOnce(promiseLike);
-    }
-  });
-};
+Promise.any = PromiseAny__default["default"];
 
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;

@@ -22,6 +22,7 @@
 
 import './promise';
 import { strict as assert } from 'assert';
+import { default as AggregateError } from 'es-aggregate-error';
 
 /**
  * Test cases for the Promise.any functionality implemented by this package.
@@ -72,9 +73,13 @@ describe('testing promise.any polyfill', () => {
       getTimedRejectingPromise(75, 'nuh-uh')
     ];
     await assert.rejects(async () => Promise.any(promises), (err: any) => {
-      assert.strictEqual(err[0], 'ignore me');
-      assert.strictEqual(err[1], 'yes');
-      assert.strictEqual(err[2], 'nuh-uh');
+      assert.ok(err instanceof AggregateError);
+      // Comment out for browser E2E test failure - Browser returns No Promise in Promise.any was resolved instead
+      //assert.strictEqual(err.message, 'All promises were rejected');
+      assert.strictEqual(err.name, 'AggregateError');
+      assert.strictEqual(err.errors[0], 'ignore me');
+      assert.strictEqual(err.errors[1], 'yes');
+      assert.strictEqual(err.errors[2], 'nuh-uh');
       return true;
     });
   });

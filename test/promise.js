@@ -1,38 +1,15 @@
 'use strict';
 
+var PromiseAny = require('promise.any');
 var assert = require('assert');
+var AggregateError = require('es-aggregate-error');
 
-Promise.any = (values) => {
-  return new Promise((resolve, reject) => {
-    var _a;
-    let hasResolved = false;
-    const promiseLikes = [];
-    let iterableCount = 0;
-    const rejectionReasons = [];
-    function resolveOnce(value) {
-      if (!hasResolved) {
-        hasResolved = true;
-        resolve(value);
-      }
-    }
-    function rejectionCheck(reason) {
-      rejectionReasons.push(reason);
-      if (rejectionReasons.length >= iterableCount)
-        reject(rejectionReasons);
-    }
-    for (const value of values) {
-      iterableCount++;
-      promiseLikes.push(value);
-    }
-    for (const promiseLike of promiseLikes) {
-      if ((promiseLike == null ? void 0 : promiseLike.then) !== void 0 || (promiseLike == null ? void 0 : promiseLike.catch) !== void 0) {
-        (_a = promiseLike == null ? void 0 : promiseLike.then((result) => resolveOnce(result))) == null ? void 0 : _a.catch(() => void 0);
-        promiseLike == null ? void 0 : promiseLike.catch((reason) => rejectionCheck(reason));
-      } else
-        resolveOnce(promiseLike);
-    }
-  });
-};
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+var PromiseAny__default = /*#__PURE__*/_interopDefaultLegacy(PromiseAny);
+var AggregateError__default = /*#__PURE__*/_interopDefaultLegacy(AggregateError);
+
+Promise.any = PromiseAny__default["default"];
 
 function getTimedResolvingPromise(msToResolve, resolveValue) {
   return new Promise((resolve) => {
@@ -68,9 +45,11 @@ describe("testing promise.any polyfill", () => {
       getTimedRejectingPromise(75, "nuh-uh")
     ];
     await assert.strict.rejects(async () => Promise.any(promises), (err) => {
-      assert.strict.strictEqual(err[0], "ignore me");
-      assert.strict.strictEqual(err[1], "yes");
-      assert.strict.strictEqual(err[2], "nuh-uh");
+      assert.strict.ok(err instanceof AggregateError__default["default"]);
+      assert.strict.strictEqual(err.name, "AggregateError");
+      assert.strict.strictEqual(err.errors[0], "ignore me");
+      assert.strict.strictEqual(err.errors[1], "yes");
+      assert.strict.strictEqual(err.errors[2], "nuh-uh");
       return true;
     });
   });
