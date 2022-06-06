@@ -35,6 +35,10 @@ npm install axios-auto
 
 https://ayanamitech.github.io/axios-auto
 
+## Configuration
+
+https://ayanamitech.github.io/axios-auto/interfaces/fetchConfig.html
+
 ## Usage
 
 ### Browser
