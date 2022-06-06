@@ -17,7 +17,7 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing fail once', date: new Date().toString() };
     const callback = (r: AxiosResponseExtended) => {
-      if (r.count === 0) {
+      if (r.count === 1) {
         assert.ok(r.error);
         assert.strictEqual(r.status, 429);
         assert.strictEqual(r.data, 'Too Many Requests');
@@ -27,7 +27,7 @@ describe('axios-auto', () => {
         assert.strictEqual(r.request.responseURL, '/once');
         return;
       }
-      if (r.count === 1) {
+      if (r.count === 2) {
         assert.ok(r.error === false);
         assert.strictEqual(r.status, 200);
         assert.deepStrictEqual(r.data, msg);
@@ -61,7 +61,7 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing fail thrice', date: new Date().toString() };
     const callback = (r: AxiosResponseExtended) => {
-      if (r.count < 3) {
+      if (r.count < 4) {
         assert.ok(r.error);
         assert.strictEqual(r.status, 429);
         assert.strictEqual(r.data, 'Too Many Requests');
@@ -71,7 +71,7 @@ describe('axios-auto', () => {
         assert.strictEqual(r.request.responseURL, '/thrice');
         return;
       }
-      if (r.count === 3) {
+      if (r.count === 4) {
         assert.ok(r.error === false);
         assert.strictEqual(r.status, 200);
         assert.deepStrictEqual(r.data, msg);

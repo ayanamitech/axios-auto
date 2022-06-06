@@ -314,10 +314,11 @@ export async function fetch(config: fetchConfig): Promise<any> {
   // Use provided axios instance if available
   const axiosInstance = config.axios ?? axios;
   const retryMax = config.retryMax ?? 5;
-  const retrySec = config.retrySec ?? 60;
+  const retrySec = config.retrySec ?? ((config.socks_isTor === true) ? 30 : 5);
   let count = 0;
 
-  while (count <= retryMax) {
+  while (count < retryMax + 1) {
+    count++;
     try {
       /**
         Browsers don't need tor socket support (Node.js only feature)
@@ -343,8 +344,6 @@ export async function fetch(config: fetchConfig): Promise<any> {
       if (response.statusText === 'error') {
         throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
       }
-
-      count++;
 
       if (typeof config.callback === 'function') {
         config.callback({ ...response, error: false, count });
@@ -373,7 +372,7 @@ export async function fetch(config: fetchConfig): Promise<any> {
       if (retryMax !== 0) {
         await setDelay(retrySec);
       }
-      if (count >= retryMax) {
+      if (count >= retryMax + 1) {
         if (typeof config.finishCallback === 'function') {
           if (e.response) {
             config.finishCallback({ ...e.response, error: e });

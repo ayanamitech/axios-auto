@@ -78,9 +78,10 @@ async function fetch(config) {
   }
   const axiosInstance = (_e = config.axios) != null ? _e : axios__default["default"];
   const retryMax = (_f = config.retryMax) != null ? _f : 5;
-  const retrySec = (_g = config.retrySec) != null ? _g : 60;
+  const retrySec = (_g = config.retrySec) != null ? _g : config.socks_isTor === true ? 30 : 5;
   let count = 0;
-  while (count <= retryMax) {
+  while (count < retryMax + 1) {
+    count++;
     try {
       if (isBrowser === false) {
         if (config.socks_enabled === true && config.socks_proxy_agent) {
@@ -100,7 +101,6 @@ async function fetch(config) {
       if (response.statusText === "error") {
         throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
       }
-      count++;
       if (typeof config.callback === "function") {
         config.callback(__spreadProps(__spreadValues({}, response), { error: false, count }));
       }
@@ -124,7 +124,7 @@ async function fetch(config) {
       if (retryMax !== 0) {
         await setDelay(retrySec);
       }
-      if (count >= retryMax) {
+      if (count >= retryMax + 1) {
         if (typeof config.finishCallback === "function") {
           if (e.response) {
             config.finishCallback(__spreadProps(__spreadValues({}, e.response), { error: e }));
@@ -165,7 +165,7 @@ describe("axios-auto", () => {
     const mock = new MockAdapter__default["default"](axiosInstance);
     const msg = { msg: "Testing fail once", date: new Date().toString() };
     const callback = (r) => {
-      if (r.count === 0) {
+      if (r.count === 1) {
         assert.strict.ok(r.error);
         assert.strict.strictEqual(r.status, 429);
         assert.strict.strictEqual(r.data, "Too Many Requests");
@@ -175,7 +175,7 @@ describe("axios-auto", () => {
         assert.strict.strictEqual(r.request.responseURL, "/once");
         return;
       }
-      if (r.count === 1) {
+      if (r.count === 2) {
         assert.strict.ok(r.error === false);
         assert.strict.strictEqual(r.status, 200);
         assert.strict.deepStrictEqual(r.data, msg);
@@ -205,7 +205,7 @@ describe("axios-auto", () => {
     const mock = new MockAdapter__default["default"](axiosInstance);
     const msg = { msg: "Testing fail thrice", date: new Date().toString() };
     const callback = (r) => {
-      if (r.count < 3) {
+      if (r.count < 4) {
         assert.strict.ok(r.error);
         assert.strict.strictEqual(r.status, 429);
         assert.strict.strictEqual(r.data, "Too Many Requests");
@@ -215,7 +215,7 @@ describe("axios-auto", () => {
         assert.strict.strictEqual(r.request.responseURL, "/thrice");
         return;
       }
-      if (r.count === 3) {
+      if (r.count === 4) {
         assert.strict.ok(r.error === false);
         assert.strict.strictEqual(r.status, 200);
         assert.strict.deepStrictEqual(r.data, msg);
