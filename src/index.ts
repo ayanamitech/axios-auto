@@ -200,9 +200,10 @@ export type getConfig = Omit<fetchConfig, 'url' | 'data'>;
 /**
  * Identical with AxiosRequestConfig
  **/
-interface AxiosConfig extends Omit<AxiosRequestConfig, 'url' | 'method' | 'timeout' | 'validateStatus' | 'httpAgent' | 'httpsAgent'> {
+interface AxiosConfig extends Omit<AxiosRequestConfig, 'url' | 'method' | 'headers' | 'timeout' | 'validateStatus' | 'httpAgent' | 'httpsAgent'> {
   url: string;
   method: Method | string;
+  headers: AxiosRequestHeaders;
   timeout: number;
   validateStatus: (status: number) => boolean;
   httpAgent?: HTTPAgent;
@@ -290,15 +291,12 @@ function createSocksOptions(config: fetchConfig, url: string, count: number): Ag
   @returns Promise<any> Data of AxiosResponse
 **/
 export async function fetch(config: fetchConfig): Promise<any> {
-  // User-Agent of Tor Browser
-  const defaultHeaders = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0'
-  };
   const axiosOptions: AxiosConfig = {
     url: (config.socks_enabled === true && config.socks_onion === true && !!config.onion_url) ? (config.onion_url || config.url) : config.url,
     method: config.method ?? 'GET',
     timeout: config.timeout ?? (config.socks_enabled ? 30000: 10000),
     validateStatus: (status) => status >= 200 && status < 300,
+    headers: config.headers ?? {}
   };
   if (config.responseType) {
     axiosOptions.responseType = config.responseType;
@@ -310,7 +308,8 @@ export async function fetch(config: fetchConfig): Promise<any> {
     Should not apply additional headers for browsers
   **/
   if (isBrowser === false) {
-    axiosOptions.headers = config.headers ?? defaultHeaders;
+    // User-Agent of Tor Browser
+    axiosOptions.headers['User-Agent'] ||= 'Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0';
   }
   // Use provided axios instance if available
   const axiosInstance = config.axios ?? axios;

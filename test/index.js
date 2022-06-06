@@ -59,15 +59,13 @@ function createSocksOptions(config, url, count) {
   return axiosOptions;
 }
 async function fetch(config) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
-  const defaultHeaders = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"
-  };
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
   const axiosOptions = {
     url: config.socks_enabled === true && config.socks_onion === true && !!config.onion_url ? config.onion_url || config.url : config.url,
     method: (_a = config.method) != null ? _a : "GET",
     timeout: (_b = config.timeout) != null ? _b : config.socks_enabled ? 3e4 : 1e4,
-    validateStatus: (status) => status >= 200 && status < 300
+    validateStatus: (status) => status >= 200 && status < 300,
+    headers: (_c = config.headers) != null ? _c : {}
   };
   if (config.responseType) {
     axiosOptions.responseType = config.responseType;
@@ -76,11 +74,11 @@ async function fetch(config) {
     axiosOptions.data = config.data;
   }
   if (isBrowser === false) {
-    axiosOptions.headers = (_c = config.headers) != null ? _c : defaultHeaders;
+    (_d = axiosOptions.headers)["User-Agent"] || (_d["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0");
   }
-  const axiosInstance = (_d = config.axios) != null ? _d : axios__default["default"];
-  const retryMax = (_e = config.retryMax) != null ? _e : 5;
-  const retrySec = (_f = config.retrySec) != null ? _f : 60;
+  const axiosInstance = (_e = config.axios) != null ? _e : axios__default["default"];
+  const retryMax = (_f = config.retryMax) != null ? _f : 5;
+  const retrySec = (_g = config.retrySec) != null ? _g : 60;
   let count = 0;
   while (count <= retryMax) {
     try {
@@ -107,15 +105,15 @@ async function fetch(config) {
         config.callback(__spreadProps(__spreadValues({}, response), { error: false, count }));
       }
       if (config.debug === true && response.config) {
-        const agent = (_g = response.config.headers) == null ? void 0 : _g["User-Agent"];
-        console.log(`Sending ${(_h = response.config.method) == null ? void 0 : _h.toUpperCase()} request to ${response.config.url} using Agent ${agent}`);
+        const agent = (_h = response.config.headers) == null ? void 0 : _h["User-Agent"];
+        console.log(`Sending ${(_i = response.config.method) == null ? void 0 : _i.toUpperCase()} request to ${response.config.url} using Agent ${agent}`);
       }
       if (typeof config.finishCallback === "function") {
         config.finishCallback(__spreadProps(__spreadValues({}, response), { error: null }));
       }
       return response.data;
     } catch (e) {
-      if (((_j = (_i = e.response) == null ? void 0 : _i.config) == null ? void 0 : _j.url) && ((_k = e.response) == null ? void 0 : _k.status)) {
+      if (((_k = (_j = e.response) == null ? void 0 : _j.config) == null ? void 0 : _k.url) && ((_l = e.response) == null ? void 0 : _l.status)) {
         if (config.debug === true) {
           console.error(`Request to ${e.response.config.url} failed with code ${e.response.status}`);
         }
