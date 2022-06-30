@@ -397,7 +397,7 @@ export async function fetch(config: fetchConfig): Promise<any> {
  * @param data POST data
  * @returns Promise<any> Promise Data of AxiosResponse
 **/
-export async function multiFetch(url: string, config: getConfig, method?: string, data?: any): Promise<any> {
+export async function multiFetch(url: string, config?: getConfig, method?: string, data?: any): Promise<any> {
   // Remove any spacing available from url string, and split to array by commas
   const urls = url.replace(/\s+/g, '').split(',');
   // Disable multiFetch when there is no Promise.any defined (Or no promise-any-polyfill);
@@ -413,7 +413,7 @@ export async function multiFetch(url: string, config: getConfig, method?: string
  * @param config FetchConfig Axios Wrapper config
  * @returns Promise<any> Promise Data of AxiosResponse
 **/
-export function get(url: string, config: getConfig): Promise<any> {
+export function get(url: string, config?: getConfig): Promise<any> {
   return multiFetch(url, config);
 }
 
@@ -424,7 +424,7 @@ export function get(url: string, config: getConfig): Promise<any> {
  * @param config FetchConfig Axios Wrapper config
  * @returns Promise<any> Promise Data of AxiosResponse
 **/
-export function post(url: string, data: any, config: getConfig): Promise<any> {
+export function post(url: string, data: any, config?: getConfig): Promise<any> {
   return multiFetch(url, config, 'post', data);
 }
 

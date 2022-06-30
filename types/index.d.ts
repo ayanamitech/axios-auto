@@ -51,7 +51,7 @@ export interface fetchConfig {
 }
 export declare type getConfig = Omit<fetchConfig, 'url' | 'data'>;
 export declare function fetch(config: fetchConfig): Promise<any>;
-export declare function multiFetch(url: string, config: getConfig, method?: string, data?: any): Promise<any>;
-export declare function get(url: string, config: getConfig): Promise<any>;
-export declare function post(url: string, data: any, config: getConfig): Promise<any>;
+export declare function multiFetch(url: string, config?: getConfig, method?: string, data?: any): Promise<any>;
+export declare function get(url: string, config?: getConfig): Promise<any>;
+export declare function post(url: string, data: any, config?: getConfig): Promise<any>;
 export default multiFetch;
