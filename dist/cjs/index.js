@@ -1,4 +1,4 @@
-"use strict";/*!
+/*!
  * MIT License
  * 
  * Copyright (c) 2014-present Matt Zabriskie & Axios Collaborators
@@ -22,4 +22,159 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  * 
- */var j=require("promise.any"),C=require("axios");function A(t){return t&&typeof t=="object"&&"default"in t?t:{default:t}}var q=A(j),S=A(C);Promise.any=q.default;var U=Object.defineProperty,E=Object.defineProperties,F=Object.getOwnPropertyDescriptors,T=Object.getOwnPropertySymbols,R=Object.prototype.hasOwnProperty,D=Object.prototype.propertyIsEnumerable,O=(t,e,o)=>e in t?U(t,e,{enumerable:!0,configurable:!0,writable:!0,value:o}):t[e]=o,c=(t,e)=>{for(var o in e||(e={}))R.call(e,o)&&O(t,o,e[o]);if(T)for(var o of T(e))D.call(e,o)&&O(t,o,e[o]);return t},f=(t,e)=>E(t,F(e));const P=typeof window<"u",G=t=>new Promise(e=>setTimeout(()=>e(),t*1e3)),u=t=>new URL(t).protocol.split(":")[0];function H(t,e,o){const a=t.socks_proxy_agent,s={agentOptions:{keepAlive:!0},hostname:t.socks_host,port:t.socks_port},l={};return!!t.socks_username&&!!t.socks_password?(s.username=t.socks_username,s.password=t.socks_password):t.socks_isTor===!0&&(s.username=`circuit${o}`),u(e)==="http"?l.httpAgent=new a(s):u(e)==="https"&&(l.httpsAgent=new a(s)),l}async function g(t){var e,o,a,s,l,y,b,k,m,_,v,w;const n={url:t.socks_enabled===!0&&t.socks_onion===!0&&!!t.onion_url&&t.onion_url||t.url,method:(e=t.method)!=null?e:"GET",timeout:(o=t.timeout)!=null?o:t.socks_enabled?3e4:1e4,validateStatus:r=>r>=200&&r<300,headers:(a=t.headers)!=null?a:{}};t.responseType&&(n.responseType=t.responseType),t.data&&(n.data=t.data),P===!1&&((s=n.headers)["User-Agent"]||(s["User-Agent"]="Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0"));const $=(l=t.axios)!=null?l:S.default,d=(y=t.retryMax)!=null?y:5,x=(b=t.retrySec)!=null?b:t.socks_isTor===!0?30:5;let i=0;for(;i<d+1;){i++;try{if(P===!1)if(t.socks_enabled===!0&&t.socks_proxy_agent){const p=H(t,n.url,i);u(n.url)==="http"?n.httpAgent=p.httpAgent:u(n.url)==="https"&&(n.httpsAgent=p.httpsAgent)}else t.httpAgent&&u(n.url)==="http"?n.httpAgent=t.httpAgent:t.httpsAgent&&u(n.url)==="https"&&(n.httpsAgent=t.httpsAgent);const r=await $(n);if(r.statusText==="error")throw new Error(`HTTP ${r.statusText} ${r.status} while fetching from ${n.url}`);if(typeof t.callback=="function"&&t.callback(f(c({},r),{error:!1,count:i})),t.debug===!0&&r.config){const p=(k=r.config.headers)==null?void 0:k["User-Agent"];console.log(`Sending ${(m=r.config.method)==null?void 0:m.toUpperCase()} request to ${r.config.url} using Agent ${p}`)}return typeof t.finishCallback=="function"&&t.finishCallback(f(c({},r),{error:null})),r.data}catch(r){if(((v=(_=r.response)==null?void 0:_.config)==null?void 0:v.url)&&((w=r.response)==null?void 0:w.status)&&(t.debug===!0&&console.error(`Request to ${r.response.config.url} failed with code ${r.response.status}`),typeof t.callback=="function"&&t.callback(f(c({},r.response),{error:!0,count:i}))),d!==0&&await G(x),i>=d+1)throw typeof t.finishCallback=="function"&&(r.response?t.finishCallback(f(c({},r.response),{error:r})):t.finishCallback({config:n,error:r})),r}}}async function h(t,e,o,a){const s=t.replace(/\s+/g,"").split(",");return s.length!==1?Promise.any(s.map(l=>g(c({url:l,method:o,data:a},e)))):g(c({url:t,method:o,data:a},e))}function L(t,e){return h(t,e)}function M(t,e,o){return h(t,o,"post",e)}exports.default=h,exports.fetch=g,exports.get=L,exports.multiFetch=h,exports.post=M;
+ */
+'use strict';
+
+var PromiseAny = require('promise.any');
+var axios = require('axios');
+
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+var PromiseAny__default = /*#__PURE__*/_interopDefaultLegacy(PromiseAny);
+var axios__default = /*#__PURE__*/_interopDefaultLegacy(axios);
+
+Promise.any = PromiseAny__default["default"];
+
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+const isBrowser = typeof window !== "undefined";
+const setDelay = (secs) => new Promise((resolve) => setTimeout(() => resolve(), secs * 1e3));
+const getProtocol = (url) => new URL(url).protocol.split(":")[0];
+function createSocksOptions(config, url, count) {
+  const SocksProxyAgent = config.socks_proxy_agent;
+  const socksOptions = {
+    agentOptions: {
+      keepAlive: true
+    },
+    hostname: config.socks_host,
+    port: config.socks_port
+  };
+  const axiosOptions = {};
+  if (!!config.socks_username && !!config.socks_password) {
+    socksOptions.username = config.socks_username;
+    socksOptions.password = config.socks_password;
+  } else if (config.socks_isTor === true) {
+    socksOptions.username = `circuit${count}`;
+  }
+  if (getProtocol(url) === "http") {
+    axiosOptions.httpAgent = new SocksProxyAgent(socksOptions);
+  } else if (getProtocol(url) === "https") {
+    axiosOptions.httpsAgent = new SocksProxyAgent(socksOptions);
+  }
+  return axiosOptions;
+}
+async function fetch(config) {
+  var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+  const axiosOptions = {
+    url: config.socks_enabled === true && config.socks_onion === true && !!config.onion_url ? config.onion_url || config.url : config.url,
+    method: (_a = config.method) != null ? _a : "GET",
+    timeout: (_b = config.timeout) != null ? _b : config.socks_enabled ? 3e4 : 1e4,
+    validateStatus: (status) => status >= 200 && status < 300,
+    headers: (_c = config.headers) != null ? _c : {}
+  };
+  if (config.responseType) {
+    axiosOptions.responseType = config.responseType;
+  }
+  if (config.data) {
+    axiosOptions.data = config.data;
+  }
+  if (isBrowser === false) {
+    (_d = axiosOptions.headers)["User-Agent"] || (_d["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0");
+  }
+  const axiosInstance = (_e = config.axios) != null ? _e : axios__default["default"];
+  const retryMax = (_f = config.retryMax) != null ? _f : 5;
+  const retrySec = (_g = config.retrySec) != null ? _g : config.socks_isTor === true ? 30 : 5;
+  let count = 0;
+  while (count < retryMax + 1) {
+    count++;
+    try {
+      if (isBrowser === false) {
+        if (config.socks_enabled === true && config.socks_proxy_agent) {
+          const socksOptions = createSocksOptions(config, axiosOptions.url, count);
+          if (getProtocol(axiosOptions.url) === "http") {
+            axiosOptions.httpAgent = socksOptions.httpAgent;
+          } else if (getProtocol(axiosOptions.url) === "https") {
+            axiosOptions.httpsAgent = socksOptions.httpsAgent;
+          }
+        } else if (config.httpAgent && getProtocol(axiosOptions.url) === "http") {
+          axiosOptions.httpAgent = config.httpAgent;
+        } else if (config.httpsAgent && getProtocol(axiosOptions.url) === "https") {
+          axiosOptions.httpsAgent = config.httpsAgent;
+        }
+      }
+      const response = await axiosInstance(axiosOptions);
+      if (response.statusText === "error") {
+        throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
+      }
+      if (typeof config.callback === "function") {
+        config.callback(__spreadProps(__spreadValues({}, response), { error: false, count }));
+      }
+      if (config.debug === true && response.config) {
+        const agent = (_h = response.config.headers) == null ? void 0 : _h["User-Agent"];
+        console.log(`Sending ${(_i = response.config.method) == null ? void 0 : _i.toUpperCase()} request to ${response.config.url} using Agent ${agent}`);
+      }
+      if (typeof config.finishCallback === "function") {
+        config.finishCallback(__spreadProps(__spreadValues({}, response), { error: null }));
+      }
+      return response.data;
+    } catch (e) {
+      if (((_k = (_j = e.response) == null ? void 0 : _j.config) == null ? void 0 : _k.url) && ((_l = e.response) == null ? void 0 : _l.status)) {
+        if (config.debug === true) {
+          console.error(`Request to ${e.response.config.url} failed with code ${e.response.status}`);
+        }
+        if (typeof config.callback === "function") {
+          config.callback(__spreadProps(__spreadValues({}, e.response), { error: true, count }));
+        }
+      }
+      if (retryMax !== 0) {
+        await setDelay(retrySec);
+      }
+      if (count >= retryMax + 1) {
+        if (typeof config.finishCallback === "function") {
+          if (e.response) {
+            config.finishCallback(__spreadProps(__spreadValues({}, e.response), { error: e }));
+          } else {
+            config.finishCallback({ config: axiosOptions, error: e });
+          }
+        }
+        throw e;
+      }
+    }
+  }
+}
+async function multiFetch(url, config, method, data) {
+  const urls = url.replace(/\s+/g, "").split(",");
+  if (urls.length !== 1) {
+    return Promise.any(urls.map((u) => fetch(__spreadValues({ url: u, method, data }, config))));
+  }
+  return fetch(__spreadValues({ url, method, data }, config));
+}
+function get(url, config) {
+  return multiFetch(url, config);
+}
+function post(url, data, config) {
+  return multiFetch(url, config, "post", data);
+}
+
+exports["default"] = multiFetch;
+exports.fetch = fetch;
+exports.get = get;
+exports.multiFetch = multiFetch;
+exports.post = post;
