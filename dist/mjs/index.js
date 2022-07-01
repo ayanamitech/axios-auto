@@ -165,5 +165,11 @@ function get(url, config) {
 function post(url, data, config) {
   return multiFetch(url, config, "post", data);
 }
+var index = {
+  fetch,
+  multiFetch,
+  get,
+  post
+};
 
-export { multiFetch as default, fetch, get, multiFetch, post };
+export { index as default, fetch, get, multiFetch, post };

@@ -72,7 +72,7 @@ const axios = require('axios-auto');
 axios.get({...options, axios: Axios });
 
 // ModuleJS (ES6 Modules)
-import * as axios from 'axios-auto';
+import axios from 'axios-auto';
 
 /**
   GET request

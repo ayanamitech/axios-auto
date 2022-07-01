@@ -428,4 +428,9 @@ export function post(url: string, data: any, config?: getConfig): Promise<any> {
   return multiFetch(url, config, 'post', data);
 }
 
-export default multiFetch;
+export default {
+  fetch,
+  multiFetch,
+  get,
+  post
+};
