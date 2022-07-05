@@ -102,36 +102,30 @@ async function fetch(config) {
         throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
       }
       if (typeof config.callback === "function") {
-        config.callback(__spreadProps(__spreadValues({}, response), { error: false, count }));
+        config.callback(__spreadProps(__spreadValues({}, response), { error: null, count }));
       }
       if (config.debug === true && response.config) {
         const agent = (_h = response.config.headers) == null ? void 0 : _h["User-Agent"];
         console.log(`Sending ${(_i = response.config.method) == null ? void 0 : _i.toUpperCase()} request to ${response.config.url} using Agent ${agent}`);
       }
-      if (typeof config.finishCallback === "function") {
-        config.finishCallback(__spreadProps(__spreadValues({}, response), { error: null }));
-      }
       return response.data;
     } catch (e) {
+      if (typeof config.callback === "function") {
+        if (e.response) {
+          config.callback(__spreadProps(__spreadValues({}, e.response), { error: e, count }));
+        } else {
+          config.callback({ config: axiosOptions, error: e, count });
+        }
+      }
       if (((_k = (_j = e.response) == null ? void 0 : _j.config) == null ? void 0 : _k.url) && ((_l = e.response) == null ? void 0 : _l.status)) {
         if (config.debug === true) {
           console.error(`Request to ${e.response.config.url} failed with code ${e.response.status}`);
-        }
-        if (typeof config.callback === "function") {
-          config.callback(__spreadProps(__spreadValues({}, e.response), { error: true, count }));
         }
       }
       if (retryMax !== 0) {
         await setDelay(retrySec);
       }
       if (count >= retryMax + 1) {
-        if (typeof config.finishCallback === "function") {
-          if (e.response) {
-            config.finishCallback(__spreadProps(__spreadValues({}, e.response), { error: e }));
-          } else {
-            config.finishCallback({ config: axiosOptions, error: e });
-          }
-        }
         throw e;
       }
     }
@@ -166,7 +160,7 @@ describe("axios-auto", () => {
     const msg = { msg: "Testing fail once", date: new Date().toString() };
     const callback = (r) => {
       if (r.count === 1) {
-        assert.strict.ok(r.error);
+        assert.strict.ok(r.error instanceof Error);
         assert.strict.strictEqual(r.status, 429);
         assert.strict.strictEqual(r.data, "Too Many Requests");
         assert.strict.strictEqual(r.config.timeout, 100);
@@ -176,7 +170,7 @@ describe("axios-auto", () => {
         return;
       }
       if (r.count === 2) {
-        assert.strict.ok(r.error === false);
+        assert.strict.ok(r.error === null);
         assert.strict.strictEqual(r.status, 200);
         assert.strict.deepStrictEqual(r.data, msg);
         assert.strict.strictEqual(r.config.timeout, 100);
@@ -187,17 +181,8 @@ describe("axios-auto", () => {
       }
       assert.strict.fail("Should not retry after success");
     };
-    const finishCallback = (r) => {
-      assert.strict.strictEqual(r.error, null);
-      assert.strict.strictEqual(r.status, 200);
-      assert.strict.deepStrictEqual(r.data, msg);
-      assert.strict.strictEqual(r.config.timeout, 100);
-      assert.strict.strictEqual(r.config.url, "/once");
-      assert.strict.strictEqual(r.config.method, "get");
-      assert.strict.strictEqual(r.request.responseURL, "/once");
-    };
     mock.onGet("/once").replyOnce(429, "Too Many Requests").onGet("/once").reply(200, msg);
-    const result = await fetch({ axios: axiosInstance, url: "/once", callback, finishCallback, timeout: 100, retrySec: 3, retryMax: 1 });
+    const result = await fetch({ axios: axiosInstance, url: "/once", callback, timeout: 100, retrySec: 3, retryMax: 1 });
     assert.strict.deepEqual(result, msg);
   });
   it("fail thrice", async () => {
@@ -206,7 +191,7 @@ describe("axios-auto", () => {
     const msg = { msg: "Testing fail thrice", date: new Date().toString() };
     const callback = (r) => {
       if (r.count < 4) {
-        assert.strict.ok(r.error);
+        assert.strict.ok(r.error instanceof Error);
         assert.strict.strictEqual(r.status, 429);
         assert.strict.strictEqual(r.data, "Too Many Requests");
         assert.strict.strictEqual(r.config.timeout, 100);
@@ -216,7 +201,7 @@ describe("axios-auto", () => {
         return;
       }
       if (r.count === 4) {
-        assert.strict.ok(r.error === false);
+        assert.strict.ok(r.error === null);
         assert.strict.strictEqual(r.status, 200);
         assert.strict.deepStrictEqual(r.data, msg);
         assert.strict.strictEqual(r.config.timeout, 100);
@@ -227,24 +212,15 @@ describe("axios-auto", () => {
       }
       assert.strict.fail("Should not retry after success");
     };
-    const finishCallback = (r) => {
-      assert.strict.strictEqual(r.error, null);
-      assert.strict.strictEqual(r.status, 200);
-      assert.strict.deepStrictEqual(r.data, msg);
-      assert.strict.strictEqual(r.config.timeout, 100);
-      assert.strict.strictEqual(r.config.url, "/thrice");
-      assert.strict.strictEqual(r.config.method, "get");
-      assert.strict.strictEqual(r.request.responseURL, "/thrice");
-    };
     mock.onGet("/thrice").replyOnce(429, "Too Many Requests").onGet("/thrice").replyOnce(429, "Too Many Requests").onGet("/thrice").replyOnce(429, "Too Many Requests").onGet("/thrice").reply(200, msg);
-    const result = await fetch({ axios: axiosInstance, url: "/thrice", callback, finishCallback, timeout: 100, retrySec: 3, retryMax: 3 });
+    const result = await fetch({ axios: axiosInstance, url: "/thrice", callback, timeout: 100, retrySec: 3, retryMax: 3 });
     assert.strict.deepEqual(result, msg);
   });
   it("fail report", async () => {
     const axiosInstance = axios__default["default"];
     const mock = new MockAdapter__default["default"](axiosInstance);
     const msg = { msg: "Testing fail report", date: new Date().toString() };
-    const finishCallback = (r) => {
+    const callback = (r) => {
       assert.strict.ok(r.error instanceof Error);
       assert.strict.strictEqual(r.status, 429);
       assert.strict.deepStrictEqual(r.data, msg);
@@ -254,7 +230,7 @@ describe("axios-auto", () => {
       assert.strict.strictEqual(r.request.responseURL, "/fail");
     };
     mock.onGet("/fail").reply(429, msg);
-    await assert.strict.rejects(async () => await fetch({ axios: axiosInstance, url: "/fail", finishCallback, timeout: 100, retrySec: 3, retryMax: 0 }), {
+    await assert.strict.rejects(async () => await fetch({ axios: axiosInstance, url: "/fail", callback, timeout: 100, retrySec: 3, retryMax: 0 }), {
       name: /^Error$/,
       message: /Request failed with status code 429/
     });

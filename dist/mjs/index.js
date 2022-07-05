@@ -117,36 +117,30 @@ async function fetch(config) {
         throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
       }
       if (typeof config.callback === "function") {
-        config.callback(__spreadProps(__spreadValues({}, response), { error: false, count }));
+        config.callback(__spreadProps(__spreadValues({}, response), { error: null, count }));
       }
       if (config.debug === true && response.config) {
         const agent = (_h = response.config.headers) == null ? void 0 : _h["User-Agent"];
         console.log(`Sending ${(_i = response.config.method) == null ? void 0 : _i.toUpperCase()} request to ${response.config.url} using Agent ${agent}`);
       }
-      if (typeof config.finishCallback === "function") {
-        config.finishCallback(__spreadProps(__spreadValues({}, response), { error: null }));
-      }
       return response.data;
     } catch (e) {
+      if (typeof config.callback === "function") {
+        if (e.response) {
+          config.callback(__spreadProps(__spreadValues({}, e.response), { error: e, count }));
+        } else {
+          config.callback({ config: axiosOptions, error: e, count });
+        }
+      }
       if (((_k = (_j = e.response) == null ? void 0 : _j.config) == null ? void 0 : _k.url) && ((_l = e.response) == null ? void 0 : _l.status)) {
         if (config.debug === true) {
           console.error(`Request to ${e.response.config.url} failed with code ${e.response.status}`);
-        }
-        if (typeof config.callback === "function") {
-          config.callback(__spreadProps(__spreadValues({}, e.response), { error: true, count }));
         }
       }
       if (retryMax !== 0) {
         await setDelay(retrySec);
       }
       if (count >= retryMax + 1) {
-        if (typeof config.finishCallback === "function") {
-          if (e.response) {
-            config.finishCallback(__spreadProps(__spreadValues({}, e.response), { error: e }));
-          } else {
-            config.finishCallback({ config: axiosOptions, error: e });
-          }
-        }
         throw e;
       }
     }

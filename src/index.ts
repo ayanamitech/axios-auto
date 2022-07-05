@@ -1,5 +1,5 @@
 import './promise';
-import axios, { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
+import axios, { Method, ResponseType, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
 
@@ -8,20 +8,6 @@ const isBrowser = typeof window !== 'undefined';
 const setDelay = (secs: number): Promise<void> => new Promise(resolve => setTimeout(() => resolve(), secs * 1000));
 
 const getProtocol = (url: string): string => new URL(url).protocol.split(':')[0];
-
-/**
- * AxiosResponse object with additional error & count params, returned by **config.callback** function for every request to server while promise is not resolved.
- */
-export interface AxiosResponseExtended extends AxiosResponse {
-  /**
-   * **error** is true when axios detected HTTP error, otherwise false
-   */
-  error: boolean,
-  /**
-   * **count** is the number of HTTP request sent to server
-   */
-  count: number
-}
 
 /**
  * AxiosResponseResult object with customized parameters from AxiosResponse to handle errors.
@@ -55,19 +41,16 @@ export interface AxiosResponseResult {
    * Will return null if promise is resolved, will return Error object when the entire promise is rejected
    */
   error: null | Error;
+  /**
+   * **count** is the number of HTTP request sent to server
+   */
+  count: number
 }
 
 /**
  * **config.callback** function to retrive debug information while promise is ongoing
  */
 export interface callback {
-  (message:AxiosResponseExtended): void;
-}
-
-/**
- * **config.finishCallback** function to retrive debug information after promise is resolved / rejected
- */
-export interface finishCallback {
   (message:AxiosResponseResult): void;
 }
 
@@ -139,10 +122,6 @@ export interface fetchConfig {
    * Will return AxiosResponseExtended for every requests sent.
    */
   callback?: callback;
-  /**
-   * **finishCallback** is the callback function called when the promise is resolved.
-   */
-  finishCallback?: finishCallback;
 
   /**
    * http.Agent class object, nodejs only https://nodejs.org/api/http.html#class-httpagent
@@ -346,7 +325,7 @@ export async function fetch(config: fetchConfig): Promise<any> {
       }
 
       if (typeof config.callback === 'function') {
-        config.callback({ ...response, error: false, count });
+        config.callback({ ...response, error: null, count });
       }
 
       if (config.debug === true && response.config) {
@@ -354,18 +333,18 @@ export async function fetch(config: fetchConfig): Promise<any> {
         console.log(`Sending ${response.config.method?.toUpperCase()} request to ${response.config.url} using Agent ${agent}`);
       }
 
-      if (typeof config.finishCallback === 'function') {
-        config.finishCallback({ ...response, error: null });
-      }
-
       return response.data;
     } catch (e: any) {
+      if (typeof config.callback === 'function') {
+        if (e.response) {
+          config.callback({ ...e.response, error: e, count });
+        } else {
+          config.callback({ config: axiosOptions, error: e, count });
+        }
+      }
       if (e.response?.config?.url && e.response?.status) {
         if (config.debug === true) {
           console.error(`Request to ${e.response.config.url} failed with code ${e.response.status}`);
-        }
-        if (typeof config.callback === 'function') {
-          config.callback({ ...e.response, error: true, count });
         }
       }
       // Disable failure delay when retry is disabled with option retryMax: 0
@@ -373,13 +352,6 @@ export async function fetch(config: fetchConfig): Promise<any> {
         await setDelay(retrySec);
       }
       if (count >= retryMax + 1) {
-        if (typeof config.finishCallback === 'function') {
-          if (e.response) {
-            config.finishCallback({ ...e.response, error: e });
-          } else {
-            config.finishCallback({ config: axiosOptions, error: e });
-          }
-        }
         throw e;
       }
     }

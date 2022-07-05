@@ -1,13 +1,9 @@
 /// <reference types="node" />
 /// <reference types="node" />
 import './promise';
-import { Method, ResponseType, AxiosResponse, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
+import { Method, ResponseType, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
-export interface AxiosResponseExtended extends AxiosResponse {
-    error: boolean;
-    count: number;
-}
 export interface AxiosResponseResult {
     data?: any;
     status?: number;
@@ -16,11 +12,9 @@ export interface AxiosResponseResult {
     config: AxiosRequestConfig;
     request?: any;
     error: null | Error;
+    count: number;
 }
 export interface callback {
-    (message: AxiosResponseExtended): void;
-}
-export interface finishCallback {
     (message: AxiosResponseResult): void;
 }
 export interface fetchConfig {
@@ -36,7 +30,6 @@ export interface fetchConfig {
     retrySec?: number;
     axios?: AxiosStatic;
     callback?: callback;
-    finishCallback?: finishCallback;
     httpAgent?: HTTPAgent;
     httpsAgent?: HTTPSAgent;
     socks_proxy_agent?: any;
