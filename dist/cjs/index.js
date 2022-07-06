@@ -123,6 +123,9 @@ async function fetch(config) {
       if (response.statusText === "error") {
         throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
       }
+      if (typeof config.filter === "function") {
+        config.filter(response.data);
+      }
       if (typeof config.callback === "function") {
         config.callback(__spreadProps(__spreadValues({}, response), { error: null, count }));
       }

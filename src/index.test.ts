@@ -102,7 +102,7 @@ describe('axios-auto', () => {
     mock
       .onGet('/fail')
       .reply(429, msg);
-    await assert.rejects(async () => await fetch({ axios: axiosInstance, url: '/fail', callback, timeout: 100, retrySec: 3, retryMax: 0 }), {
+    await assert.rejects(async () => await fetch({ axios: axiosInstance, url: '/fail', callback, timeout: 100, retryMax: 0 }), {
       name: /^Error$/,
       message: /Request failed with status code 429/
     });
@@ -120,7 +120,7 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing GET fail request', date: new Date().toString() };
     mock.onGet('/get').reply(200, msg);
-    await assert.rejects(async () => await get('/getFail', { axios: axiosInstance, timeout: 100, retrySec: 3, retryMax: 0  }), {
+    await assert.rejects(async () => await get('/getFail', { axios: axiosInstance, timeout: 100, retryMax: 0  }), {
       name: /^Error$/,
       message: /Request failed with status code 404/
     });
@@ -131,7 +131,7 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance, { onNoMatch: 'throwException' });
     const msg = { msg: 'Testing POST request', date: new Date().toString() };
     mock.onPost('/post', { id: 1 }).reply(200, msg);
-    const result = await post('/post', { id: 1 }, { axios: axiosInstance, timeout: 100, retryMax: 0, retrySec: 3 });
+    const result = await post('/post', { id: 1 }, { axios: axiosInstance, timeout: 100, retryMax: 0 });
     assert.strictEqual(result.error, undefined);
     assert.deepEqual(result, msg);
   });
@@ -140,9 +140,32 @@ describe('axios-auto', () => {
     const mock = new MockAdapter(axiosInstance);
     const msg = { msg: 'Testing POST fail request', date: new Date().toString() };
     mock.onPost('/postFail', { id: 1 }).reply(200, msg);
-    await assert.rejects(async () => await post('/postFail', { id: 2 }, { axios: axiosInstance, timeout: 100, retryMax: 0, retrySec: 3  }), {
+    await assert.rejects(async () => await post('/postFail', { id: 2 }, { axios: axiosInstance, timeout: 100, retryMax: 0  }), {
       name: /^Error$/,
       message: /Request failed with status code 404/
+    });
+  });
+  it('Throw for filter func', async () => {
+    const axiosInstance = axios;
+    const mock = new MockAdapter(axiosInstance);
+    const msg = { error: { message: 'Testing POST fail request' }, date: new Date().toString() };
+    const filter = (data: any) => {
+      if (data.error) {
+        let message: string = (typeof data.error === 'object') ? JSON.stringify(data.error) : (typeof data.error === 'string') ? data.error : '';
+        if (typeof data.error.message === 'string') {
+          message = data.error.message;
+        } else if (typeof data.body === 'string') {
+          message = data.body;
+        } else if (typeof data.responseText === 'string') {
+          message = data.responseText;
+        }
+        throw new Error(message);
+      }
+    };
+    mock.onPost('/filterTest', { id: 1 }).reply(200, msg);
+    await assert.rejects(async () => await post('/filterTest', { id: 1 }, { axios: axiosInstance, timeout: 100, retryMax: 0, filter }), {
+      name: /^Error$/,
+      message: /Testing POST fail request/
     });
   });
 });

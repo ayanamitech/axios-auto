@@ -17,6 +17,9 @@ export interface AxiosResponseResult {
 export interface callback {
     (message: AxiosResponseResult): void;
 }
+export interface filter {
+    (data: any): void;
+}
 export interface fetchConfig {
     url: string;
     method?: Method | string;
@@ -30,6 +33,7 @@ export interface fetchConfig {
     retrySec?: number;
     axios?: AxiosStatic;
     callback?: callback;
+    filter?: filter;
     httpAgent?: HTTPAgent;
     httpsAgent?: HTTPSAgent;
     socks_proxy_agent?: any;

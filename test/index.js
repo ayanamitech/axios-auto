@@ -101,6 +101,9 @@ async function fetch(config) {
       if (response.statusText === "error") {
         throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
       }
+      if (typeof config.filter === "function") {
+        config.filter(response.data);
+      }
       if (typeof config.callback === "function") {
         config.callback(__spreadProps(__spreadValues({}, response), { error: null, count }));
       }
@@ -230,7 +233,7 @@ describe("axios-auto", () => {
       assert.strict.strictEqual(r.request.responseURL, "/fail");
     };
     mock.onGet("/fail").reply(429, msg);
-    await assert.strict.rejects(async () => await fetch({ axios: axiosInstance, url: "/fail", callback, timeout: 100, retrySec: 3, retryMax: 0 }), {
+    await assert.strict.rejects(async () => await fetch({ axios: axiosInstance, url: "/fail", callback, timeout: 100, retryMax: 0 }), {
       name: /^Error$/,
       message: /Request failed with status code 429/
     });
@@ -248,7 +251,7 @@ describe("axios-auto", () => {
     const mock = new MockAdapter__default["default"](axiosInstance);
     const msg = { msg: "Testing GET fail request", date: new Date().toString() };
     mock.onGet("/get").reply(200, msg);
-    await assert.strict.rejects(async () => await get("/getFail", { axios: axiosInstance, timeout: 100, retrySec: 3, retryMax: 0 }), {
+    await assert.strict.rejects(async () => await get("/getFail", { axios: axiosInstance, timeout: 100, retryMax: 0 }), {
       name: /^Error$/,
       message: /Request failed with status code 404/
     });
@@ -258,7 +261,7 @@ describe("axios-auto", () => {
     const mock = new MockAdapter__default["default"](axiosInstance, { onNoMatch: "throwException" });
     const msg = { msg: "Testing POST request", date: new Date().toString() };
     mock.onPost("/post", { id: 1 }).reply(200, msg);
-    const result = await post("/post", { id: 1 }, { axios: axiosInstance, timeout: 100, retryMax: 0, retrySec: 3 });
+    const result = await post("/post", { id: 1 }, { axios: axiosInstance, timeout: 100, retryMax: 0 });
     assert.strict.strictEqual(result.error, void 0);
     assert.strict.deepEqual(result, msg);
   });
@@ -267,9 +270,32 @@ describe("axios-auto", () => {
     const mock = new MockAdapter__default["default"](axiosInstance);
     const msg = { msg: "Testing POST fail request", date: new Date().toString() };
     mock.onPost("/postFail", { id: 1 }).reply(200, msg);
-    await assert.strict.rejects(async () => await post("/postFail", { id: 2 }, { axios: axiosInstance, timeout: 100, retryMax: 0, retrySec: 3 }), {
+    await assert.strict.rejects(async () => await post("/postFail", { id: 2 }, { axios: axiosInstance, timeout: 100, retryMax: 0 }), {
       name: /^Error$/,
       message: /Request failed with status code 404/
+    });
+  });
+  it("Throw for filter func", async () => {
+    const axiosInstance = axios__default["default"];
+    const mock = new MockAdapter__default["default"](axiosInstance);
+    const msg = { error: { message: "Testing POST fail request" }, date: new Date().toString() };
+    const filter = (data) => {
+      if (data.error) {
+        let message = typeof data.error === "object" ? JSON.stringify(data.error) : typeof data.error === "string" ? data.error : "";
+        if (typeof data.error.message === "string") {
+          message = data.error.message;
+        } else if (typeof data.body === "string") {
+          message = data.body;
+        } else if (typeof data.responseText === "string") {
+          message = data.responseText;
+        }
+        throw new Error(message);
+      }
+    };
+    mock.onPost("/filterTest", { id: 1 }).reply(200, msg);
+    await assert.strict.rejects(async () => await post("/filterTest", { id: 1 }, { axios: axiosInstance, timeout: 100, retryMax: 0, filter }), {
+      name: /^Error$/,
+      message: /Testing POST fail request/
     });
   });
 });

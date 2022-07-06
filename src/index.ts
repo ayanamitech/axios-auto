@@ -55,6 +55,13 @@ export interface callback {
 }
 
 /**
+ * **config.filter** function filters object or Array data to catch custom errors
+ */
+export interface filter {
+  (data:any): void;
+}
+
+/**
  * Common Axios Wrapper config used by fetch function
  */
 export interface fetchConfig {
@@ -122,6 +129,11 @@ export interface fetchConfig {
    * Will return AxiosResponseExtended for every requests sent.
    */
   callback?: callback;
+  /**
+   * **filter** is the callback function to filter response.data for specific case
+   * where server returns error inside the object data without HTTP error code.
+   */
+  filter?: filter;
 
   /**
    * http.Agent class object, nodejs only https://nodejs.org/api/http.html#class-httpagent
@@ -322,6 +334,10 @@ export async function fetch(config: fetchConfig): Promise<any> {
 
       if (response.statusText === 'error') {
         throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
+      }
+
+      if (typeof config.filter === 'function') {
+        config.filter(response.data);
       }
 
       if (typeof config.callback === 'function') {
