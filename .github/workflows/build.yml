@@ -21,5 +21,5 @@ jobs:
         run: npm run lint
       - name: Run builds
         run: npm run build
-      #- name: Check Files Diff (Should fail when we have any single file change)
-      #  run: npm run test:git
+      - name: Check Files Diff (Should fail when we have any single file change)
+        run: npm run test:git

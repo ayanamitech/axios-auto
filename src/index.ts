@@ -58,7 +58,7 @@ export interface callback {
  * **config.filter** function filters object or Array data to catch custom errors
  */
 export interface filter {
-  (data:any): void;
+  (data:any, count?: number, retryMax?: number): void;
 }
 
 /**
@@ -337,7 +337,7 @@ export async function fetch(config: fetchConfig): Promise<any> {
       }
 
       if (typeof config.filter === 'function') {
-        config.filter(response.data);
+        config.filter(response.data, count, retryMax);
       }
 
       if (typeof config.callback === 'function') {

@@ -28,25 +28,6 @@ import axios from 'axios';
 
 Promise.any = PromiseAny;
 
-var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 const isBrowser = typeof window !== "undefined";
 const setDelay = (secs) => new Promise((resolve) => setTimeout(() => resolve(), secs * 1e3));
 const getProtocol = (url) => new URL(url).protocol.split(":")[0];
@@ -117,10 +98,10 @@ async function fetch(config) {
         throw new Error(`HTTP ${response.statusText} ${response.status} while fetching from ${axiosOptions.url}`);
       }
       if (typeof config.filter === "function") {
-        config.filter(response.data);
+        config.filter(response.data, count, retryMax);
       }
       if (typeof config.callback === "function") {
-        config.callback(__spreadProps(__spreadValues({}, response), { error: null, count }));
+        config.callback({ ...response, error: null, count });
       }
       if (config.debug === true && response.config) {
         const agent = (_h = response.config.headers) == null ? void 0 : _h["User-Agent"];
@@ -130,7 +111,7 @@ async function fetch(config) {
     } catch (e) {
       if (typeof config.callback === "function") {
         if (e.response) {
-          config.callback(__spreadProps(__spreadValues({}, e.response), { error: e, count }));
+          config.callback({ ...e.response, error: e, count });
         } else {
           config.callback({ config: axiosOptions, error: e, count });
         }
@@ -152,9 +133,9 @@ async function fetch(config) {
 async function multiFetch(url, config, method, data) {
   const urls = url.replace(/\s+/g, "").split(",");
   if (urls.length !== 1) {
-    return Promise.any(urls.map((u) => fetch(__spreadValues({ url: u, method, data }, config))));
+    return Promise.any(urls.map((u) => fetch({ url: u, method, data, ...config })));
   }
-  return fetch(__spreadValues({ url, method, data }, config));
+  return fetch({ url, method, data, ...config });
 }
 function get(url, config) {
   return multiFetch(url, config);

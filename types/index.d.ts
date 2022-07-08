@@ -18,7 +18,7 @@ export interface callback {
     (message: AxiosResponseResult): void;
 }
 export interface filter {
-    (data: any): void;
+    (data: any, count?: number, retryMax?: number): void;
 }
 export interface fetchConfig {
     url: string;
