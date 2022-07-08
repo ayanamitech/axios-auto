@@ -1,6 +1,6 @@
 {
   "name": "axios-auto",
-  "version": "0.28.10",
+  "version": "0.28.11",
   "description": "Simple Axios function with basic retry & tor support",
   "main": "./dist/cjs/index.js",
   "module": "./dist/mjs/index.js",
