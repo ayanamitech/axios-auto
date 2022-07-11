@@ -55,8 +55,12 @@ async function fetch(config, signal) {
   if (config.data) {
     axiosOptions.data = config.data;
   }
+  let abort = false;
   if (signal) {
     axiosOptions.signal = signal;
+    signal.addEventListener("abort", () => {
+      abort = true;
+    });
   }
   if (isBrowser === false) {
     (_d = axiosOptions.headers)["User-Agent"] || (_d["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0");
@@ -66,6 +70,9 @@ async function fetch(config, signal) {
   const retrySec = (_g = config.retrySec) != null ? _g : config.socks_isTor === true ? 30 : 5;
   let count = 0;
   while (count < retryMax + 1) {
+    if (abort) {
+      throw new Error("This operation was aborted.");
+    }
     count++;
     try {
       if (isBrowser === false) {
@@ -119,11 +126,6 @@ async function fetch(config, signal) {
       if (count >= retryMax + 1) {
         throw e;
       }
-    }
-    if (signal) {
-      signal.addEventListener("abort", () => {
-        throw new Error("This operation was aborted.");
-      });
     }
   }
 }

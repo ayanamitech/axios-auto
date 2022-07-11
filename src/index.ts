@@ -297,11 +297,17 @@ export async function fetch(config: fetchConfig, signal?: AbortSignal): Promise<
   if (config.data) {
     axiosOptions.data = config.data;
   }
+  let abort = false;
+
   if (signal) {
     // TO-DO: Fix strange typeError "Type 'AbortSignal' is missing the following properties from type 'AbortSignal': reason, throwIfAborted"
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     axiosOptions.signal = signal;
+
+    signal.addEventListener('abort', () => {
+      abort = true;
+    });
   }
   /**
     Should not apply additional headers for browsers
@@ -317,6 +323,10 @@ export async function fetch(config: fetchConfig, signal?: AbortSignal): Promise<
   let count = 0;
 
   while (count < retryMax + 1) {
+    if (abort) {
+      throw new Error('This operation was aborted.');
+    }
+
     count++;
     try {
       /**
@@ -383,13 +393,6 @@ export async function fetch(config: fetchConfig, signal?: AbortSignal): Promise<
       if (count >= retryMax + 1) {
         throw e;
       }
-    }
-
-    if (signal) {
-      // Cancel promise to reduce on-going remote rpc calls
-      signal.addEventListener('abort', () => {
-        throw new Error('This operation was aborted.');
-      });
     }
   }
 }
