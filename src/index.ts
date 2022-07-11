@@ -390,7 +390,27 @@ export async function multiFetch(url: string, config?: getConfig, method?: strin
   const urls = url.replace(/\s+/g, '').split(',');
   // Disable multiFetch when there is no Promise.any defined (Or no promise-any-polyfill);
   if (urls.length !== 1) {
-    return Promise.any(urls.map(u => fetch({ url: u, method, data, ...config })));
+    let count = urls.length;
+    let success = false;
+    return Promise.any(urls.map(async u => {
+      // Suppress throwing error before every promise is resolved / rejected
+      try {
+        const result = await fetch({ url: u, method, data, ...config });
+        count--;
+        success = true;
+        return result;
+      } catch (e) {
+        count--;
+        while (count > 0) {
+          if (success === true) {
+            break;
+          }
+        }
+        if (success === false) {
+          throw e;
+        }
+      }
+    }));
   }
   return fetch({ url, method, data, ...config });
 }

@@ -133,7 +133,21 @@ async function fetch(config) {
 async function multiFetch(url, config, method, data) {
   const urls = url.replace(/\s+/g, "").split(",");
   if (urls.length !== 1) {
-    return Promise.any(urls.map((u) => fetch({ url: u, method, data, ...config })));
+    let count = urls.length;
+    let success = false;
+    return Promise.any(urls.map(async (u) => {
+      try {
+        const result = await fetch({ url: u, method, data, ...config });
+        count--;
+        success = true;
+        return result;
+      } catch (e) {
+        count--;
+        if (success === false) {
+          throw e;
+        }
+      }
+    }));
   }
   return fetch({ url, method, data, ...config });
 }
