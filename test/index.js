@@ -55,6 +55,9 @@ async function fetch(config, signal) {
   if (config.data) {
     axiosOptions.data = config.data;
   }
+  if (signal) {
+    axiosOptions.signal = signal;
+  }
   if (isBrowser === false) {
     (_d = axiosOptions.headers)["User-Agent"] || (_d["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0");
   }
@@ -95,6 +98,9 @@ async function fetch(config, signal) {
       }
       return response.data;
     } catch (e) {
+      if (signal && signal.aborted) {
+        throw e;
+      }
       if (typeof config.callback === "function") {
         if (e.response) {
           config.callback({ ...e.response, error: e, count });
@@ -115,9 +121,6 @@ async function fetch(config, signal) {
       }
     }
     if (signal) {
-      if (signal.aborted) {
-        throw new Error("This operation was aborted.");
-      }
       signal.addEventListener("abort", () => {
         throw new Error("This operation was aborted.");
       });
