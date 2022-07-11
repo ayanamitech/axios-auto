@@ -24,6 +24,7 @@
  * 
  */
 import PromiseAny from 'promise.any';
+import { AbortController } from 'abortcontroller-polyfill/dist/cjs-ponyfill';
 import axios from 'axios';
 
 Promise.any = PromiseAny;
@@ -54,7 +55,7 @@ function createSocksOptions(config, url, count) {
   }
   return axiosOptions;
 }
-async function fetch(config) {
+async function fetch(config, signal) {
   var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
   const axiosOptions = {
     url: config.socks_enabled === true && config.socks_onion === true && !!config.onion_url ? config.onion_url || config.url : config.url,
@@ -128,6 +129,14 @@ async function fetch(config) {
         throw e;
       }
     }
+    if (signal) {
+      if (signal.aborted) {
+        throw new Error("This operation was aborted.");
+      }
+      signal.addEventListener("abort", () => {
+        throw new Error("This operation was aborted.");
+      });
+    }
   }
 }
 async function multiFetch(url, config, method, data) {
@@ -135,11 +144,13 @@ async function multiFetch(url, config, method, data) {
   if (urls.length !== 1) {
     let count = urls.length;
     let success = false;
+    const abortController = new AbortController();
     return Promise.any(urls.map(async (u) => {
       try {
-        const result = await fetch({ url: u, method, data, ...config });
+        const result = await fetch({ url: u, method, data, ...config }, abortController.signal);
         count--;
         success = true;
+        abortController.abort();
         return result;
       } catch (e) {
         count--;
@@ -148,8 +159,9 @@ async function multiFetch(url, config, method, data) {
         }
       }
     }));
+  } else {
+    return fetch({ url, method, data, ...config });
   }
-  return fetch({ url, method, data, ...config });
 }
 function get(url, config) {
   return multiFetch(url, config);

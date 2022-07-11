@@ -1,7 +1,9 @@
 import './promise';
+import { AbortController } from 'abortcontroller-polyfill/dist/cjs-ponyfill';
 import axios, { Method, ResponseType, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
+import type { AbortSignal } from 'abortcontroller-polyfill/dist/cjs-ponyfill';
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -281,7 +283,7 @@ function createSocksOptions(config: fetchConfig, url: string, count: number): Ag
   @param config FetchConfig Axios Wrapper config
   @returns Promise<any> Data of AxiosResponse
 **/
-export async function fetch(config: fetchConfig): Promise<any> {
+export async function fetch(config: fetchConfig, signal?: AbortSignal): Promise<any> {
   const axiosOptions: AxiosConfig = {
     url: (config.socks_enabled === true && config.socks_onion === true && !!config.onion_url) ? (config.onion_url || config.url) : config.url,
     method: config.method ?? 'GET',
@@ -371,6 +373,17 @@ export async function fetch(config: fetchConfig): Promise<any> {
         throw e;
       }
     }
+
+    if (signal) {
+      // Cancel promise to reduce on-going remote rpc calls
+      if (signal.aborted) {
+        throw new Error('This operation was aborted.');
+      }
+
+      signal.addEventListener('abort', () => {
+        throw new Error('This operation was aborted.');
+      });
+    }
   }
 }
 
@@ -392,12 +405,14 @@ export async function multiFetch(url: string, config?: getConfig, method?: strin
   if (urls.length !== 1) {
     let count = urls.length;
     let success = false;
+    const abortController = new AbortController();
     return Promise.any(urls.map(async u => {
       // Suppress throwing error before every promise is resolved / rejected
       try {
-        const result = await fetch({ url: u, method, data, ...config });
+        const result = await fetch({ url: u, method, data, ...config }, abortController.signal);
         count--;
         success = true;
+        abortController.abort();
         return result;
       } catch (e) {
         count--;
@@ -411,8 +426,9 @@ export async function multiFetch(url: string, config?: getConfig, method?: strin
         }
       }
     }));
+  } else {
+    return fetch({ url, method, data, ...config });
   }
-  return fetch({ url, method, data, ...config });
 }
 
 /**

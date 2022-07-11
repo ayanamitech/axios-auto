@@ -1,6 +1,6 @@
 {
   "name": "axios-auto",
-  "version": "0.28.13",
+  "version": "0.28.14",
   "description": "Simple Axios function with basic retry & tor support",
   "main": "./dist/cjs/index.js",
   "module": "./dist/mjs/index.js",
@@ -81,6 +81,7 @@
     "socks-proxy-agent": "^7.0.0"
   },
   "dependencies": {
+    "abortcontroller-polyfill": "^1.7.3",
     "promise.any": "^2.0.4"
   }
 }
