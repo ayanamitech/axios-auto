@@ -1,7 +1,7 @@
 'use strict';
 
 var PromiseAny = require('promise.any');
-var cjsPonyfill = require('abortcontroller-polyfill/dist/cjs-ponyfill');
+require('abortcontroller-polyfill/dist/abortcontroller-polyfill-only');
 var axios = require('axios');
 var assert = require('assert');
 var MockAdapter = require('axios-mock-adapter');
@@ -134,7 +134,7 @@ async function multiFetch(url, config, method, data) {
   if (urls.length !== 1) {
     let count = urls.length;
     let success = false;
-    const abortController = new cjsPonyfill.AbortController();
+    const abortController = new AbortController();
     return Promise.any(urls.map(async (u) => {
       try {
         const result = await fetch({ url: u, method, data, ...config }, abortController.signal);

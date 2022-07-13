@@ -24,7 +24,7 @@
  * 
  */
 import PromiseAny from 'promise.any';
-import { AbortController } from 'abortcontroller-polyfill/dist/cjs-ponyfill';
+import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only';
 import axios from 'axios';
 
 Promise.any = PromiseAny;

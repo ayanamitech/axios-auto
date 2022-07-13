@@ -1,10 +1,10 @@
 /// <reference types="node" />
 /// <reference types="node" />
 import './promise';
+import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only';
 import { Method, ResponseType, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
-import type { AbortSignal } from 'abortcontroller-polyfill/dist/cjs-ponyfill';
 export interface AxiosResponseResult {
     data?: any;
     status?: number;
@@ -48,7 +48,7 @@ export interface fetchConfig {
     socks_password?: string;
 }
 export declare type getConfig = Omit<fetchConfig, 'url' | 'data'>;
-export declare function fetch(config: fetchConfig, signal?: AbortSignal): Promise<any>;
+export declare function fetch(config: fetchConfig, signal?: any): Promise<any>;
 export declare function multiFetch(url: string, config?: getConfig, method?: string, data?: any): Promise<any>;
 export declare function get(url: string, config?: getConfig): Promise<any>;
 export declare function post(url: string, data: any, config?: getConfig): Promise<any>;

@@ -1,9 +1,8 @@
 import './promise';
-import { AbortController } from 'abortcontroller-polyfill/dist/cjs-ponyfill';
+import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only';
 import axios, { Method, ResponseType, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
-import type { AbortSignal } from 'abortcontroller-polyfill/dist/cjs-ponyfill';
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -283,7 +282,7 @@ function createSocksOptions(config: fetchConfig, url: string, count: number): Ag
   @param config FetchConfig Axios Wrapper config
   @returns Promise<any> Data of AxiosResponse
 **/
-export async function fetch(config: fetchConfig, signal?: AbortSignal): Promise<any> {
+export async function fetch(config: fetchConfig, signal?: any): Promise<any> {
   const axiosOptions: AxiosConfig = {
     url: (config.socks_enabled === true && config.socks_onion === true && !!config.onion_url) ? (config.onion_url || config.url) : config.url,
     method: config.method ?? 'GET',
@@ -300,9 +299,6 @@ export async function fetch(config: fetchConfig, signal?: AbortSignal): Promise<
   let abort = false;
 
   if (signal) {
-    // TO-DO: Fix strange typeError "Type 'AbortSignal' is missing the following properties from type 'AbortSignal': reason, throwIfAborted"
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     axiosOptions.signal = signal;
 
     signal.addEventListener('abort', () => {
