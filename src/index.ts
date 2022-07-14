@@ -416,7 +416,9 @@ export async function multiFetch(url: string, config?: getConfig, method?: strin
     // https://stackoverflow.com/questions/48091147/event-emitter-setmaxlisteners15-how-does-it-work-here
     if (typeof window === 'undefined' && typeof process !== 'undefined' && process.release.name === 'node') {
       const { default: events } = await import('events');
-      events.setMaxListeners(30 + urls.length, abortController.signal);
+      if (typeof events.setMaxListeners === 'function') {
+        events.setMaxListeners(30 + urls.length, abortController.signal);
+      }
     }
     return Promise.any(urls.map(async u => {
       // Suppress throwing error before every promise is resolved / rejected
