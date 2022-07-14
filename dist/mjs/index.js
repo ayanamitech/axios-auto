@@ -168,7 +168,11 @@ async function multiFetch(url, config, method, data) {
     if (typeof window === "undefined" && typeof process !== "undefined" && process.release.name === "node") {
       const { default: events } = await Promise.resolve().then(() => __toESM(require("events")));
       if (typeof events.setMaxListeners === "function") {
-        events.setMaxListeners(30 + urls.length);
+        try {
+          events.setMaxListeners(30 + urls.length, abortController.signal);
+        } catch (e) {
+          events.setMaxListeners(30 + urls.length);
+        }
       }
     }
     return Promise.any(urls.map(async (u) => {
