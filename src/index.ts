@@ -1,5 +1,5 @@
 import './promise';
-import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only';
+import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only.js';
 import axios, { Method, ResponseType, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
@@ -412,6 +412,12 @@ export async function multiFetch(url: string, config?: getConfig, method?: strin
     let count = urls.length;
     let success = false;
     const abortController = new AbortController();
+    // Disable security warning for adding multiple event listeners by AbortController.signal
+    // https://stackoverflow.com/questions/48091147/event-emitter-setmaxlisteners15-how-does-it-work-here
+    if (typeof process !== 'undefined' && process.release.name === 'node') {
+      const { default: events } = await import('events');
+      events.setMaxListeners(30 + urls.length, abortController.signal);
+    }
     return Promise.any(urls.map(async u => {
       // Suppress throwing error before every promise is resolved / rejected
       try {

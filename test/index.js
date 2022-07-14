@@ -1,7 +1,7 @@
 'use strict';
 
 var PromiseAny = require('promise.any');
-require('abortcontroller-polyfill/dist/abortcontroller-polyfill-only');
+require('abortcontroller-polyfill/dist/abortcontroller-polyfill-only.js');
 var axios = require('axios');
 var assert = require('assert');
 var MockAdapter = require('axios-mock-adapter');
@@ -14,6 +14,21 @@ var MockAdapter__default = /*#__PURE__*/_interopDefaultLegacy(MockAdapter);
 
 Promise.any = PromiseAny__default["default"];
 
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target, mod));
 const isBrowser = typeof window !== "undefined";
 const setDelay = (secs) => new Promise((resolve) => setTimeout(() => resolve(), secs * 1e3));
 const getProtocol = (url) => new URL(url).protocol.split(":")[0];
@@ -135,6 +150,10 @@ async function multiFetch(url, config, method, data) {
     let count = urls.length;
     let success = false;
     const abortController = new AbortController();
+    if (typeof process !== "undefined" && process.release.name === "node") {
+      const { default: events } = await Promise.resolve().then(() => __toESM(require("events")));
+      events.setMaxListeners(30 + urls.length, abortController.signal);
+    }
     return Promise.any(urls.map(async (u) => {
       try {
         const result = await fetch({ url: u, method, data, ...config }, abortController.signal);

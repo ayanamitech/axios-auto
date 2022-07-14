@@ -1,7 +1,7 @@
 /// <reference types="node" />
 /// <reference types="node" />
 import './promise';
-import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only';
+import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only.js';
 import { Method, ResponseType, AxiosStatic, AxiosRequestHeaders, AxiosResponseHeaders, AxiosRequestConfig } from 'axios';
 import type { Agent as HTTPAgent } from 'http';
 import type { Agent as HTTPSAgent } from 'https';
