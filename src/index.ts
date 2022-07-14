@@ -417,7 +417,7 @@ export async function multiFetch(url: string, config?: getConfig, method?: strin
     if (typeof window === 'undefined' && typeof process !== 'undefined' && process.release.name === 'node') {
       const { default: events } = await import('events');
       if (typeof events.setMaxListeners === 'function') {
-        events.setMaxListeners(30 + urls.length, abortController.signal);
+        events.setMaxListeners(30 + urls.length);
       }
     }
     return Promise.any(urls.map(async u => {
