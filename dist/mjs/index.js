@@ -165,7 +165,7 @@ async function multiFetch(url, config, method, data) {
     let count = urls.length;
     let success = false;
     const abortController = new AbortController();
-    if (typeof process !== "undefined" && process.release.name === "node") {
+    if (typeof window === "undefined" && typeof process !== "undefined" && process.release.name === "node") {
       const { default: events } = await Promise.resolve().then(() => __toESM(require("events")));
       events.setMaxListeners(30 + urls.length, abortController.signal);
     }

@@ -414,7 +414,7 @@ export async function multiFetch(url: string, config?: getConfig, method?: strin
     const abortController = new AbortController();
     // Disable security warning for adding multiple event listeners by AbortController.signal
     // https://stackoverflow.com/questions/48091147/event-emitter-setmaxlisteners15-how-does-it-work-here
-    if (typeof process !== 'undefined' && process.release.name === 'node') {
+    if (typeof window === 'undefined' && typeof process !== 'undefined' && process.release.name === 'node') {
       const { default: events } = await import('events');
       events.setMaxListeners(30 + urls.length, abortController.signal);
     }
